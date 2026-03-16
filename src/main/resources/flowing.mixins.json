@@ -4,12 +4,14 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"CameraMixin",
+		"ChatScreenMixin",
 		"EntityMixin",
 		"GameRendererMixin",
 		"InGameHudMixin",
 		"InGameOverlayRendererMixin",
 		"KeyboardMixin",
 		"LightmapTextureManagerMixin",
+		"MouseMixin",
 		"PlayerListEntryMixin",
 		"WorldRendererMixin"
 	],

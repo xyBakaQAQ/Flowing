@@ -2,6 +2,7 @@ package com.xybaka.flowing.gui.clickgui;
 
 import com.xybaka.flowing.modules.Category;
 import com.xybaka.flowing.modules.Module;
+import com.xybaka.flowing.modules.settings.BooleanSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
@@ -21,16 +22,24 @@ public final class ClickGuiScreen extends Screen {
     private static final int CATEGORY_WIDTH = 96;
     private static final int MODULE_ROW_HEIGHT = 20;
     private static final int SETTING_ROW_HEIGHT = 14;
+    private static final int SETTING_INDENT = 16;
+    private static final int SETTING_LEVEL_WIDTH = 14;
+    private static final int MODE_INDENT = 30;
     private static final int TEXT_COLOR = ColorUtil.rgb(255, 255, 255);
     private static final int MUTED_TEXT_COLOR = ColorUtil.rgb(211, 216, 224);
     private static final int ENABLED_TEXT_COLOR = ColorUtil.rgb(200, 255, 176);
+    private static final int BOOLEAN_ON_COLOR = ColorUtil.rgb(115, 225, 140);
+    private static final int BOOLEAN_OFF_COLOR = ColorUtil.rgb(255, 108, 108);
     private static final int PANEL_COLOR = ColorUtil.rgb(12, 17, 23);
     private static final int HEADER_COLOR = ColorUtil.rgb(28, 40, 55);
     private static final int CATEGORY_COLOR = ColorUtil.rgb(18, 25, 35);
     private static final int MODULE_COLOR = ColorUtil.rgb(29, 39, 51);
     private static final int ENABLED_MODULE_COLOR = ColorUtil.rgb(41, 74, 37);
-    private static final int SETTING_COLOR = ColorUtil.rgb(22, 30, 40);
-    private static final int MODE_OPTION_COLOR = ColorUtil.rgb(34, 48, 65);
+    private static final int SETTING_COLOR = ColorUtil.rgb(20, 27, 37);
+    private static final int SETTING_STRIPE_COLOR = ColorUtil.rgb(76, 116, 166);
+    private static final int SETTING_SECTION_COLOR = ColorUtil.rgba(9, 13, 18, 110);
+    private static final int MODE_OPTION_COLOR = ColorUtil.rgb(26, 38, 53);
+    private static final int MODE_OPTION_STRIPE_COLOR = ColorUtil.rgb(118, 156, 209);
     private static final int SETTING_ACCENT_COLOR = ColorUtil.rgb(43, 64, 90);
     private static final int SETTING_FILL_COLOR = ColorUtil.rgb(131, 182, 255);
     private static final int SELECTED_CATEGORY_COLOR = ColorUtil.rgb(49, 70, 95);
@@ -259,14 +268,23 @@ public final class ClickGuiScreen extends Screen {
     }
 
     private int renderSettingBlock(DrawContext context, Setting setting, int contentX, int panelRight, int y) {
+        int indent = SETTING_INDENT + setting.getIndentLevel() * SETTING_LEVEL_WIDTH;
         int blockHeight = getSettingBlockHeight(setting);
+        int blockTop = y - 4;
+        int blockBottom = y + blockHeight - 4;
+        int settingLeft = contentX + indent;
+        int sectionLeft = contentX + Math.max(4, indent - 12);
         int settingTop = y - 3;
         int settingBottom = y + SETTING_ROW_HEIGHT - 3;
-        context.fill(contentX + 4, settingTop, panelRight - 16, settingBottom, SETTING_COLOR);
-        context.drawBorder(contentX + 4, settingTop, panelRight - contentX - 20, SETTING_ROW_HEIGHT, BORDER_COLOR);
+        int settingWidth = panelRight - settingLeft - 16;
+
+        context.fill(sectionLeft, blockTop, panelRight - 16, blockBottom, SETTING_SECTION_COLOR);
+        context.fill(sectionLeft + 4, blockTop + 1, sectionLeft + 6, blockBottom - 1, SETTING_STRIPE_COLOR);
+        context.fill(settingLeft, settingTop, panelRight - 16, settingBottom, SETTING_COLOR);
+        context.drawBorder(settingLeft, settingTop, settingWidth, SETTING_ROW_HEIGHT, BORDER_COLOR);
 
         if (setting instanceof NumberSetting numberSetting) {
-            int sliderLeft = contentX + 6;
+            int sliderLeft = settingLeft + 2;
             int sliderRight = panelRight - 18;
             int sliderWidth = sliderRight - sliderLeft;
             int fillWidth = (int) Math.round(sliderWidth * manager.getNumberPercent(numberSetting));
@@ -274,17 +292,20 @@ public final class ClickGuiScreen extends Screen {
             context.fill(sliderLeft, settingTop + 1, sliderLeft + fillWidth, settingBottom - 1, SETTING_FILL_COLOR);
         }
 
-        context.drawText(textRenderer, Text.literal(manager.getSettingLabel(setting)), contentX + 10, y, TEXT_COLOR, false);
+        drawSettingLabel(context, setting, settingLeft + 6, y);
 
         if (setting instanceof ModeSetting modeSetting && manager.isModeListOpen(modeSetting)) {
             int optionY = y + SETTING_ROW_HEIGHT;
             for (String mode : modeSetting.getModes()) {
+                int optionLeft = contentX + MODE_INDENT + setting.getIndentLevel() * SETTING_LEVEL_WIDTH;
                 int optionTop = optionY - 3;
                 int optionBottom = optionY + SETTING_ROW_HEIGHT - 3;
+                int optionWidth = panelRight - optionLeft - 28;
                 int optionColor = mode.equals(modeSetting.getValue()) ? SELECTED_CATEGORY_COLOR : MODE_OPTION_COLOR;
-                context.fill(contentX + 16, optionTop, panelRight - 28, optionBottom, optionColor);
-                context.drawBorder(contentX + 16, optionTop, panelRight - contentX - 44, SETTING_ROW_HEIGHT, BORDER_COLOR);
-                context.drawText(textRenderer, Text.literal(mode), contentX + 22, optionY, TEXT_COLOR, false);
+                context.fill(optionLeft, optionTop, panelRight - 28, optionBottom, optionColor);
+                context.fill(optionLeft + 2, optionTop + 1, optionLeft + 4, optionBottom - 1, MODE_OPTION_STRIPE_COLOR);
+                context.drawBorder(optionLeft, optionTop, optionWidth, SETTING_ROW_HEIGHT, BORDER_COLOR);
+                context.drawText(textRenderer, Text.literal("* " + mode), optionLeft + 8, optionY, TEXT_COLOR, false);
                 optionY += SETTING_ROW_HEIGHT;
             }
         }
@@ -292,15 +313,31 @@ public final class ClickGuiScreen extends Screen {
         return blockHeight;
     }
 
+    private void drawSettingLabel(DrawContext context, Setting setting, int x, int y) {
+        String prefix = setting.getIndentLevel() > 0 ? "-> " : "- ";
+        if (setting instanceof BooleanSetting booleanSetting) {
+            String base = prefix + setting.getName() + ": ";
+            String state = booleanSetting.getValue() ? "ON" : "OFF";
+            int stateColor = booleanSetting.getValue() ? BOOLEAN_ON_COLOR : BOOLEAN_OFF_COLOR;
+            context.drawText(textRenderer, Text.literal(base), x, y, TEXT_COLOR, false);
+            context.drawText(textRenderer, Text.literal(state), x + textRenderer.getWidth(base), y, stateColor, false);
+            return;
+        }
+
+        context.drawText(textRenderer, Text.literal(prefix + manager.getSettingLabel(setting)), x, y, TEXT_COLOR, false);
+    }
+
     private int handleSettingClick(double mouseX, double mouseY, int button, Setting setting, int contentX, int panelRight, int y) {
+        int indent = SETTING_INDENT + setting.getIndentLevel() * SETTING_LEVEL_WIDTH;
+        int settingLeft = contentX + indent;
         int settingTop = y - 3;
         int settingBottom = y + SETTING_ROW_HEIGHT - 3;
-        boolean hoveredSetting = mouseX >= contentX + 4 && mouseX <= panelRight - 16 && mouseY >= settingTop && mouseY <= settingBottom;
+        boolean hoveredSetting = mouseX >= settingLeft && mouseX <= panelRight - 16 && mouseY >= settingTop && mouseY <= settingBottom;
         if (hoveredSetting) {
             manager.clearBindingTarget();
             if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && manager.handleSettingLeftClick(setting)) {
                 if (setting instanceof NumberSetting numberSetting) {
-                    updateNumberSettingFromMouse(numberSetting, mouseX, contentX, panelRight);
+                    updateNumberSettingFromMouse(numberSetting, mouseX, contentX, panelRight, setting);
                 }
                 return getSettingBlockHeight(setting);
             }
@@ -313,9 +350,10 @@ public final class ClickGuiScreen extends Screen {
         if (setting instanceof ModeSetting modeSetting && manager.isModeListOpen(modeSetting)) {
             int optionY = y + SETTING_ROW_HEIGHT;
             for (String mode : modeSetting.getModes()) {
+                int optionLeft = contentX + MODE_INDENT + setting.getIndentLevel() * SETTING_LEVEL_WIDTH;
                 int optionTop = optionY - 3;
                 int optionBottom = optionY + SETTING_ROW_HEIGHT - 3;
-                boolean hoveredOption = mouseX >= contentX + 16 && mouseX <= panelRight - 28 && mouseY >= optionTop && mouseY <= optionBottom;
+                boolean hoveredOption = mouseX >= optionLeft && mouseX <= panelRight - 28 && mouseY >= optionTop && mouseY <= optionBottom;
                 if (hoveredOption && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                     manager.chooseMode(modeSetting, mode);
                     return getSettingBlockHeight(setting);
@@ -334,11 +372,15 @@ public final class ClickGuiScreen extends Screen {
         return SETTING_ROW_HEIGHT;
     }
 
-    private void updateNumberSettingFromMouse(NumberSetting setting, double mouseX, int contentX, int panelRight) {
-        double sliderLeft = contentX + 6;
+    private void updateNumberSettingFromMouse(NumberSetting setting, double mouseX, int contentX, int panelRight, Setting baseSetting) {
+        double sliderLeft = contentX + SETTING_INDENT + baseSetting.getIndentLevel() * SETTING_LEVEL_WIDTH + 2;
         double sliderRight = panelRight - 18;
         double percent = (mouseX - sliderLeft) / (sliderRight - sliderLeft);
         manager.updateSliding(setting, percent);
+    }
+
+    private void updateNumberSettingFromMouse(NumberSetting setting, double mouseX, int contentX, int panelRight) {
+        updateNumberSettingFromMouse(setting, mouseX, contentX, panelRight, setting);
     }
 
     private boolean isLeftShiftDown() {

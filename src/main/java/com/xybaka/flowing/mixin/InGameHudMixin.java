@@ -1,5 +1,6 @@
 package com.xybaka.flowing.mixin;
 
+import com.xybaka.flowing.gui.keystrokes.KeystrokesRenderer;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.render.HUD;
 import net.minecraft.client.gui.DrawContext;
@@ -18,6 +19,9 @@ public class InGameHudMixin {
         HUD hud = ModuleManager.getModule(HUD.class);
         if (hud != null && hud.isEnabled()) {
             hud.render(context);
+            if (hud.shouldRenderKeystrokes()) {
+                KeystrokesRenderer.render(context, hud);
+            }
         }
     }
 

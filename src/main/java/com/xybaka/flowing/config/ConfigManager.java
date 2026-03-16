@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.xybaka.flowing.Flowing;
+import com.xybaka.flowing.gui.component.HudPositionManager;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
@@ -59,6 +60,8 @@ public final class ConfigManager {
                 }
 
                 JsonObject root = parsed.getAsJsonObject();
+                HudPositionManager.getInstance().load(root.getAsJsonObject("components"));
+
                 JsonObject modulesObject = root.getAsJsonObject("modules");
                 if (modulesObject == null) {
                     return;
@@ -83,6 +86,8 @@ public final class ConfigManager {
             Files.createDirectories(CONFIG_DIR);
 
             JsonObject root = new JsonObject();
+            root.add("components", HudPositionManager.getInstance().save());
+
             JsonObject modulesObject = new JsonObject();
             for (Module module : ModuleManager.getModules()) {
                 modulesObject.add(module.getName(), serializeModule(module));
