@@ -1,11 +1,12 @@
 package com.xybaka.flowing.modules;
 
-import com.xybaka.flowing.event.Event;
-import com.xybaka.flowing.event.features.KeyboardEvent;
-import com.xybaka.flowing.event.features.TickEvent;
 import com.xybaka.flowing.modules.client.ClickGUI;
+import com.xybaka.flowing.modules.client.Target;
+import com.xybaka.flowing.modules.client.Teams;
 import com.xybaka.flowing.modules.movement.Sprint;
 import com.xybaka.flowing.modules.render.Camera;
+import com.xybaka.flowing.modules.render.Cape;
+import com.xybaka.flowing.modules.render.ESP;
 import com.xybaka.flowing.modules.render.FullBright;
 import com.xybaka.flowing.modules.render.HUD;
 
@@ -17,8 +18,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
 
 public final class ModuleManager {
     private static ModuleManager instance;
@@ -52,6 +51,8 @@ public final class ModuleManager {
     private void initializeModules() {
         // CLIENT
         registerModule(new ClickGUI());
+        registerModule(new Target());
+        registerModule(new Teams());
 
         // MOVEMENT
         registerModule(new Sprint());
@@ -59,6 +60,8 @@ public final class ModuleManager {
         // RENDER
         registerModule(new HUD());
         registerModule(new Camera());
+        registerModule(new Cape());
+        registerModule(new ESP());
         registerModule(new FullBright());
     }
 
@@ -106,27 +109,6 @@ public final class ModuleManager {
 
     public static List<Module> getModulesByCategory(Category category) {
         return Collections.unmodifiableList(getInstance().modulesByCategory.get(category));
-    }
-
-    public static void onTick() {
-        post(new TickEvent());
-    }
-
-    public static void onKey(int key, int action) {
-        if (key == GLFW_KEY_UNKNOWN) {
-            return;
-        }
-
-        post(new KeyboardEvent(key, action));
-    }
-
-    public static void post(Event event) {
-        boolean keyboardEvent = event instanceof KeyboardEvent;
-        for (Module module : getModules()) {
-            if (keyboardEvent || module.isEnabled()) {
-                event.call(module);
-            }
-        }
     }
 
     private static String normalize(String name) {

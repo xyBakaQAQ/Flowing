@@ -1,8 +1,9 @@
 package com.xybaka.flowing;
 
+import com.xybaka.flowing.config.ConfigManager;
+import com.xybaka.flowing.event.EventManager;
 import com.xybaka.flowing.modules.ModuleManager;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +14,8 @@ public final class Flowing implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ModuleManager.init();
-        ClientTickEvents.END_CLIENT_TICK.register(client -> ModuleManager.onTick());
+        ConfigManager.init();
+        EventManager.init();
         LOGGER.info("Flowing initialized with {} modules", ModuleManager.getModules().size());
     }
 }

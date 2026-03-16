@@ -7,7 +7,7 @@ import org.lwjgl.glfw.GLFW;
 
 public final class Camera extends Module {
     private final BooleanSetting cameraNoClip = bool("CameraNoClip", true);
-    private final BooleanSetting noHurtCam = bool("NoHurtCam", true);
+    private final BooleanSetting noHurtCam = bool("NoHurtCam", false);
     private final BooleanSetting lowFireOverlay = bool("LowFireOverlay", true);
     private final BooleanSetting noBlindness = bool("NoBlindness", true);
     private final BooleanSetting noNausea = bool("NoNausea", true);

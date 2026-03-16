@@ -7,14 +7,12 @@ import com.xybaka.flowing.modules.settings.BooleanSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
-import org.lwjgl.glfw.GLFW;
+import com.xybaka.flowing.util.KeyUtil;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,6 +37,27 @@ public final class ClickGuiManager {
 
     public List<Category> getCategories() {
         return Arrays.asList(Category.values());
+    }
+
+    public String getCategoryDisplayName(Category category) {
+        return switch (category) {
+            case COMBAT -> "Combat";
+            case MOVEMENT -> "Movement";
+            case PLAYER -> "Flayer";
+            case RENDER -> "Render";
+            case WORLD -> "World";
+            case CLIENT -> "Client";
+        };
+    }
+
+    public void syncVisibleState() {
+        if (!isSettingVisible(openModeSetting)) {
+            openModeSetting = null;
+        }
+
+        if (!isSettingVisible(slidingSetting)) {
+            slidingSetting = null;
+        }
     }
 
     public List<Module> getModules() {
@@ -66,11 +85,14 @@ public final class ClickGuiManager {
     }
 
     public List<Setting> getVisibleSettings(Module module) {
-        return new ArrayList<>(module.getSettings());
+        syncVisibleState();
+        return module.getSettings().stream()
+                .filter(Setting::isVisible)
+                .toList();
     }
 
     public boolean hasSettings(Module module) {
-        return module.hasSettings();
+        return !getVisibleSettings(module).isEmpty();
     }
 
     public boolean isEnabled(Module module) {
@@ -90,40 +112,8 @@ public final class ClickGuiManager {
     }
 
     public String getKeyName(Module module) {
-        int key = module.getKey();
-        if (key == GLFW.GLFW_KEY_UNKNOWN) {
-            return "NONE";
-        }
-
-        String keyName = GLFW.glfwGetKeyName(key, 0);
-        if (keyName != null && !keyName.isBlank()) {
-            return keyName.toUpperCase(Locale.ROOT);
-        }
-
-        return switch (key) {
-            case GLFW.GLFW_KEY_SPACE -> "SPACE";
-            case GLFW.GLFW_KEY_LEFT_SHIFT -> "L_SHIFT";
-            case GLFW.GLFW_KEY_RIGHT_SHIFT -> "R_SHIFT";
-            case GLFW.GLFW_KEY_LEFT_CONTROL -> "L_CTRL";
-            case GLFW.GLFW_KEY_RIGHT_CONTROL -> "R_CTRL";
-            case GLFW.GLFW_KEY_LEFT_ALT -> "L_ALT";
-            case GLFW.GLFW_KEY_RIGHT_ALT -> "R_ALT";
-            case GLFW.GLFW_KEY_TAB -> "TAB";
-            case GLFW.GLFW_KEY_ENTER -> "ENTER";
-            case GLFW.GLFW_KEY_ESCAPE -> "ESC";
-            case GLFW.GLFW_KEY_BACKSPACE -> "BACKSPACE";
-            case GLFW.GLFW_KEY_INSERT -> "INSERT";
-            case GLFW.GLFW_KEY_DELETE -> "DELETE";
-            case GLFW.GLFW_KEY_HOME -> "HOME";
-            case GLFW.GLFW_KEY_END -> "END";
-            case GLFW.GLFW_KEY_PAGE_UP -> "PAGE_UP";
-            case GLFW.GLFW_KEY_PAGE_DOWN -> "PAGE_DOWN";
-            case GLFW.GLFW_KEY_UP -> "UP";
-            case GLFW.GLFW_KEY_DOWN -> "DOWN";
-            case GLFW.GLFW_KEY_LEFT -> "LEFT";
-            case GLFW.GLFW_KEY_RIGHT -> "RIGHT";
-            default -> "KEY_" + key;
-        };
+        String displayName = KeyUtil.toDisplayName(module.getKey());
+        return "UNKNOWN".equals(displayName) ? "NONE" : displayName;
     }
 
     public Category getSelectedCategory() {
@@ -142,7 +132,7 @@ public final class ClickGuiManager {
     }
 
     public void toggleExpanded(Module module) {
-        if (!module.hasSettings()) {
+        if (!hasSettings(module)) {
             return;
         }
 
@@ -174,26 +164,27 @@ public final class ClickGuiManager {
             return;
         }
 
-        setKey(bindingModule, key == GLFW.GLFW_KEY_ESCAPE ? GLFW.GLFW_KEY_UNKNOWN : key);
+        setKey(bindingModule, key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE ? org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN : key);
         bindingModule = null;
     }
 
     public boolean handleSettingLeftClick(Setting setting) {
         if (setting instanceof BooleanSetting booleanSetting) {
             booleanSetting.toggle();
-            openModeSetting = null;
+            syncVisibleState();
             return true;
         }
 
         if (setting instanceof ModeSetting modeSetting) {
             openModeSetting = openModeSetting == modeSetting ? null : modeSetting;
             slidingSetting = null;
+            syncVisibleState();
             return true;
         }
 
         if (setting instanceof NumberSetting numberSetting) {
             slidingSetting = numberSetting;
-            openModeSetting = null;
+            syncVisibleState();
             return true;
         }
 
@@ -204,6 +195,7 @@ public final class ClickGuiManager {
         if (setting instanceof ModeSetting modeSetting) {
             openModeSetting = openModeSetting == modeSetting ? null : modeSetting;
             slidingSetting = null;
+            syncVisibleState();
             return true;
         }
 
@@ -220,7 +212,8 @@ public final class ClickGuiManager {
 
     public void chooseMode(ModeSetting setting, String mode) {
         setting.setValue(mode);
-        openModeSetting = null;
+        openModeSetting = setting;
+        syncVisibleState();
     }
 
     public void closeModeList() {
@@ -239,6 +232,7 @@ public final class ClickGuiManager {
         double clamped = Math.max(0.0D, Math.min(1.0D, percent));
         double value = setting.getMin() + (setting.getMax() - setting.getMin()) * clamped;
         setting.setValue(value);
+        syncVisibleState();
     }
 
     public String getSettingLabel(Setting setting) {
@@ -247,7 +241,7 @@ public final class ClickGuiManager {
         }
 
         if (setting instanceof ModeSetting modeSetting) {
-            return setting.getName() + ": " + modeSetting.getValue() + " v";
+            return setting.getName() + ": " + modeSetting.getValue();
         }
 
         if (setting instanceof NumberSetting numberSetting) {
@@ -264,6 +258,10 @@ public final class ClickGuiManager {
         }
 
         return (setting.getValue() - setting.getMin()) / range;
+    }
+
+    private boolean isSettingVisible(Setting setting) {
+        return setting != null && setting.isVisible();
     }
 
     private String trimNumber(double value) {

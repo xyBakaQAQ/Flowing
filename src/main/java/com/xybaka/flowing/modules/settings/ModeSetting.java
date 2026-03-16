@@ -1,5 +1,6 @@
 package com.xybaka.flowing.modules.settings;
 
+import com.xybaka.flowing.config.ConfigManager;
 import com.xybaka.flowing.modules.Module;
 
 import java.util.Arrays;
@@ -25,6 +26,7 @@ public final class ModeSetting extends Setting {
         }
 
         this.value = value;
+        ConfigManager.requestSave();
     }
 
     public List<String> getModes() {

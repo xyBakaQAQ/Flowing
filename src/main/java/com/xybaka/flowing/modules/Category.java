@@ -6,5 +6,5 @@ public enum Category {
     PLAYER,
     RENDER,
     WORLD,
-    MISC
+    CLIENT
 }

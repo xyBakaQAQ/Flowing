@@ -5,6 +5,8 @@ import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
+import com.xybaka.flowing.util.ColorUtil;
+import com.xybaka.flowing.util.WindowUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -13,33 +15,44 @@ import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public final class ClickGuiScreen extends Screen {
-    private static final int PANEL_X = 18;
-    private static final int PANEL_Y = 18;
     private static final int PANEL_WIDTH = 410;
     private static final int PANEL_HEIGHT = 250;
     private static final int HEADER_HEIGHT = 22;
     private static final int CATEGORY_WIDTH = 96;
     private static final int MODULE_ROW_HEIGHT = 20;
     private static final int SETTING_ROW_HEIGHT = 14;
-    private static final int TEXT_COLOR = 0xFFFFFFFF;
-    private static final int MUTED_TEXT_COLOR = 0xFFD3D8E0;
-    private static final int ENABLED_TEXT_COLOR = 0xFFC8FFB0;
-    private static final int PANEL_COLOR = 0xFF0C1117;
-    private static final int HEADER_COLOR = 0xFF1C2837;
-    private static final int CATEGORY_COLOR = 0xFF121923;
-    private static final int MODULE_COLOR = 0xFF1D2733;
-    private static final int ENABLED_MODULE_COLOR = 0xFF294A25;
-    private static final int SETTING_COLOR = 0xFF161E28;
-    private static final int MODE_OPTION_COLOR = 0xFF223041;
-    private static final int SETTING_ACCENT_COLOR = 0xFF2B405A;
-    private static final int SETTING_FILL_COLOR = 0xFF83B6FF;
-    private static final int SELECTED_CATEGORY_COLOR = 0xFF31465F;
-    private static final int BORDER_COLOR = 0xFF51657D;
+    private static final int TEXT_COLOR = ColorUtil.rgb(255, 255, 255);
+    private static final int MUTED_TEXT_COLOR = ColorUtil.rgb(211, 216, 224);
+    private static final int ENABLED_TEXT_COLOR = ColorUtil.rgb(200, 255, 176);
+    private static final int PANEL_COLOR = ColorUtil.rgb(12, 17, 23);
+    private static final int HEADER_COLOR = ColorUtil.rgb(28, 40, 55);
+    private static final int CATEGORY_COLOR = ColorUtil.rgb(18, 25, 35);
+    private static final int MODULE_COLOR = ColorUtil.rgb(29, 39, 51);
+    private static final int ENABLED_MODULE_COLOR = ColorUtil.rgb(41, 74, 37);
+    private static final int SETTING_COLOR = ColorUtil.rgb(22, 30, 40);
+    private static final int MODE_OPTION_COLOR = ColorUtil.rgb(34, 48, 65);
+    private static final int SETTING_ACCENT_COLOR = ColorUtil.rgb(43, 64, 90);
+    private static final int SETTING_FILL_COLOR = ColorUtil.rgb(131, 182, 255);
+    private static final int SELECTED_CATEGORY_COLOR = ColorUtil.rgb(49, 70, 95);
+    private static final int BORDER_COLOR = ColorUtil.rgb(81, 101, 125);
 
     private final ClickGuiManager manager = ClickGuiManager.getInstance();
+    private int panelX;
+    private int panelY;
+    private boolean dragging;
+    private int dragOffsetX;
+    private int dragOffsetY;
 
     public ClickGuiScreen() {
         super(Text.literal("Flowing ClickGUI"));
+        this.panelX = WindowUtil.getCenteredX(PANEL_WIDTH);
+        this.panelY = WindowUtil.getCenteredY(PANEL_HEIGHT);
+    }
+
+    @Override
+    protected void init() {
+        panelX = WindowUtil.getCenteredX(PANEL_WIDTH);
+        panelY = WindowUtil.getCenteredY(PANEL_HEIGHT);
     }
 
     @Override
@@ -53,37 +66,39 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        int panelRight = PANEL_X + PANEL_WIDTH;
-        int panelBottom = PANEL_Y + PANEL_HEIGHT;
-        int contentX = PANEL_X + CATEGORY_WIDTH + 12;
+        manager.syncVisibleState();
 
-        context.fill(PANEL_X, PANEL_Y, panelRight, panelBottom, PANEL_COLOR);
-        context.drawBorder(PANEL_X, PANEL_Y, PANEL_WIDTH, PANEL_HEIGHT, BORDER_COLOR);
-        context.fill(PANEL_X, PANEL_Y, panelRight, PANEL_Y + HEADER_HEIGHT, HEADER_COLOR);
-        context.fill(PANEL_X, PANEL_Y + HEADER_HEIGHT, PANEL_X + CATEGORY_WIDTH, panelBottom, CATEGORY_COLOR);
-        context.fill(PANEL_X + CATEGORY_WIDTH, PANEL_Y + HEADER_HEIGHT, PANEL_X + CATEGORY_WIDTH + 1, panelBottom, BORDER_COLOR);
+        int panelRight = panelX + PANEL_WIDTH;
+        int panelBottom = panelY + PANEL_HEIGHT;
+        int contentX = panelX + CATEGORY_WIDTH + 12;
 
-        context.drawText(textRenderer, title, PANEL_X + 10, PANEL_Y + 7, TEXT_COLOR, true);
+        context.fill(panelX, panelY, panelRight, panelBottom, PANEL_COLOR);
+        context.drawBorder(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, BORDER_COLOR);
+        context.fill(panelX, panelY, panelRight, panelY + HEADER_HEIGHT, HEADER_COLOR);
+        context.fill(panelX, panelY + HEADER_HEIGHT, panelX + CATEGORY_WIDTH, panelBottom, CATEGORY_COLOR);
+        context.fill(panelX + CATEGORY_WIDTH, panelY + HEADER_HEIGHT, panelX + CATEGORY_WIDTH + 1, panelBottom, BORDER_COLOR);
+
+        context.drawText(textRenderer, title, panelX + 10, panelY + 7, TEXT_COLOR, true);
 
         Text hint = manager.getBindingModule() == null
-                ? Text.literal("LMB toggle | RMB settings | LSHIFT+LMB bind")
+                ? Text.literal("LMB toggle | RMB settings | Drag header")
                 : Text.literal("Binding " + manager.getBindingModule().getName() + " - press a key, ESC clears");
-        context.drawText(textRenderer, hint, PANEL_X + 126, PANEL_Y + 7, MUTED_TEXT_COLOR, false);
+        context.drawText(textRenderer, hint, panelX + 126, panelY + 7, MUTED_TEXT_COLOR, false);
 
-        int categoryY = PANEL_Y + HEADER_HEIGHT + 10;
+        int categoryY = panelY + HEADER_HEIGHT + 10;
         for (Category category : manager.getCategories()) {
             int top = categoryY - 4;
             int bottom = categoryY + 12;
             if (category == manager.getSelectedCategory()) {
-                context.fill(PANEL_X + 5, top, PANEL_X + CATEGORY_WIDTH - 5, bottom, SELECTED_CATEGORY_COLOR);
+                context.fill(panelX + 5, top, panelX + CATEGORY_WIDTH - 5, bottom, SELECTED_CATEGORY_COLOR);
             }
 
             int color = category == manager.getSelectedCategory() ? TEXT_COLOR : MUTED_TEXT_COLOR;
-            context.drawText(textRenderer, category.name(), PANEL_X + 10, categoryY, color, true);
+            context.drawText(textRenderer, manager.getCategoryDisplayName(category), panelX + 10, categoryY, color, true);
             categoryY += 16;
         }
 
-        int moduleY = PANEL_Y + HEADER_HEIGHT + 10;
+        int moduleY = panelY + HEADER_HEIGHT + 10;
         for (Module module : manager.getVisibleModules()) {
             int rowTop = moduleY - 4;
             int rowBottom = moduleY + MODULE_ROW_HEIGHT - 4;
@@ -123,20 +138,29 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int categoryY = PANEL_Y + HEADER_HEIGHT + 10;
+        manager.syncVisibleState();
+
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && isHoveringHeader(mouseX, mouseY)) {
+            dragging = true;
+            dragOffsetX = (int) mouseX - panelX;
+            dragOffsetY = (int) mouseY - panelY;
+            return true;
+        }
+
+        int categoryY = panelY + HEADER_HEIGHT + 10;
         for (Category category : manager.getCategories()) {
             int top = categoryY - 4;
             int bottom = categoryY + 12;
-            if (mouseX >= PANEL_X + 5 && mouseX <= PANEL_X + CATEGORY_WIDTH - 5 && mouseY >= top && mouseY <= bottom) {
+            if (mouseX >= panelX + 5 && mouseX <= panelX + CATEGORY_WIDTH - 5 && mouseY >= top && mouseY <= bottom) {
                 manager.selectCategory(category);
                 return true;
             }
             categoryY += 16;
         }
 
-        int panelRight = PANEL_X + PANEL_WIDTH;
-        int contentX = PANEL_X + CATEGORY_WIDTH + 12;
-        int moduleY = PANEL_Y + HEADER_HEIGHT + 10;
+        int panelRight = panelX + PANEL_WIDTH;
+        int contentX = panelX + CATEGORY_WIDTH + 12;
+        int moduleY = panelY + HEADER_HEIGHT + 10;
 
         for (Module module : manager.getVisibleModules()) {
             int rowTop = moduleY - 4;
@@ -183,10 +207,18 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        manager.syncVisibleState();
+
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && dragging) {
+            panelX = clampPanelX((int) mouseX - dragOffsetX);
+            panelY = clampPanelY((int) mouseY - dragOffsetY);
+            return true;
+        }
+
         NumberSetting slidingSetting = manager.getSlidingSetting();
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && slidingSetting != null) {
-            int contentX = PANEL_X + CATEGORY_WIDTH + 12;
-            int panelRight = PANEL_X + PANEL_WIDTH;
+            int contentX = panelX + CATEGORY_WIDTH + 12;
+            int panelRight = panelX + PANEL_WIDTH;
             updateNumberSettingFromMouse(slidingSetting, mouseX, contentX, panelRight);
             return true;
         }
@@ -197,6 +229,7 @@ public final class ClickGuiScreen extends Screen {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            dragging = false;
             manager.stopSliding();
         }
         return super.mouseReleased(mouseX, mouseY, button);
@@ -219,6 +252,7 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public void close() {
+        dragging = false;
         manager.stopSliding();
         manager.closeModeList();
         MinecraftClient.getInstance().setScreen(null);
@@ -310,5 +344,17 @@ public final class ClickGuiScreen extends Screen {
     private boolean isLeftShiftDown() {
         MinecraftClient client = MinecraftClient.getInstance();
         return InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT);
+    }
+
+    private boolean isHoveringHeader(double mouseX, double mouseY) {
+        return mouseX >= panelX && mouseX <= panelX + PANEL_WIDTH && mouseY >= panelY && mouseY <= panelY + HEADER_HEIGHT;
+    }
+
+    private int clampPanelX(int x) {
+        return Math.max(0, Math.min(x, width - PANEL_WIDTH));
+    }
+
+    private int clampPanelY(int y) {
+        return Math.max(0, Math.min(y, height - PANEL_HEIGHT));
     }
 }

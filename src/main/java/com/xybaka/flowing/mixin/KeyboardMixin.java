@@ -1,6 +1,6 @@
 package com.xybaka.flowing.mixin;
 
-import com.xybaka.flowing.modules.ModuleManager;
+import com.xybaka.flowing.event.EventManager;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Final;
@@ -26,6 +26,6 @@ public abstract class KeyboardMixin {
             return;
         }
 
-        ModuleManager.onKey(key, action);
+        EventManager.onKey(key, action);
     }
 }

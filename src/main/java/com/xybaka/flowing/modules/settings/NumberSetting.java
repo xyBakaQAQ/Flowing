@@ -1,5 +1,6 @@
 package com.xybaka.flowing.modules.settings;
 
+import com.xybaka.flowing.config.ConfigManager;
 import com.xybaka.flowing.modules.Module;
 
 public final class NumberSetting extends Setting {
@@ -23,6 +24,7 @@ public final class NumberSetting extends Setting {
     public void setValue(double value) {
         double clamped = Math.max(min, Math.min(max, value));
         this.value = snap(clamped);
+        ConfigManager.requestSave();
     }
 
     public double getMin() {

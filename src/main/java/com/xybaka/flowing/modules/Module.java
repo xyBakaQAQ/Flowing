@@ -1,5 +1,6 @@
 package com.xybaka.flowing.modules;
 
+import com.xybaka.flowing.config.ConfigManager;
 import com.xybaka.flowing.event.EventListener;
 import com.xybaka.flowing.event.features.KeyboardEvent;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
@@ -46,6 +47,7 @@ public abstract class Module implements EventListener {
 
     public final void setKey(int key) {
         this.key = key;
+        ConfigManager.requestSave();
     }
 
     public final boolean isEnabled() {
@@ -72,10 +74,11 @@ public abstract class Module implements EventListener {
         this.enabled = enabled;
         if (enabled) {
             onEnable();
-            return;
+        } else {
+            onDisable();
         }
 
-        onDisable();
+        ConfigManager.requestSave();
     }
 
     public final List<Setting> getSettings() {

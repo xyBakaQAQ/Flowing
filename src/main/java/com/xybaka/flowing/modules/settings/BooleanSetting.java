@@ -1,5 +1,6 @@
 package com.xybaka.flowing.modules.settings;
 
+import com.xybaka.flowing.config.ConfigManager;
 import com.xybaka.flowing.modules.Module;
 
 public final class BooleanSetting extends Setting {
@@ -16,9 +17,10 @@ public final class BooleanSetting extends Setting {
 
     public void setValue(boolean value) {
         this.value = value;
+        ConfigManager.requestSave();
     }
 
     public void toggle() {
-        value = !value;
+        setValue(!value);
     }
 }
