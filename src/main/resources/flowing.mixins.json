@@ -1,0 +1,20 @@
+{
+	"required": true,
+	"package": "com.xybaka.flowing.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"CameraMixin",
+		"GameRendererMixin",
+		"InGameHudMixin",
+		"InGameOverlayRendererMixin",
+		"KeyboardMixin",
+		"LightmapTextureManagerMixin",
+		"WorldRendererMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

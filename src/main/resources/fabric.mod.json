@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "flowing",
+	"version": "${version}",
+	"name": "Flowing",
+	"description": "Fabric 1.21.4",
+	"authors": [
+		"xyBakaQAQ"
+	],
+	"contact": {
+		"homepage": "",
+		"sources": "https://github.com/xyBakaQAQ/Flowing"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/flowing/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.xybaka.flowing.Flowing"
+		]
+	},
+	"mixins": [
+		"flowing.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.4",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
