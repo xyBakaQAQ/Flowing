@@ -22,4 +22,9 @@ public final class ClickGUI extends Module {
 
         disable();
     }
+
+    @Override
+    protected boolean shouldNotifyStateChange() {
+        return false;
+    }
 }

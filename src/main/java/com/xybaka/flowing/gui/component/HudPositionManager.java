@@ -17,12 +17,16 @@ public final class HudPositionManager {
         return INSTANCE;
     }
 
-    public int getX(String id, int defaultX) {
-        return positions.computeIfAbsent(id, key -> new Position(defaultX, 0)).x();
+    public boolean hasPosition(String id) {
+        return positions.containsKey(id);
     }
 
-    public int getY(String id, int defaultY) {
-        return positions.computeIfAbsent(id, key -> new Position(0, defaultY)).y();
+    public int getX(String id, int defaultX, int defaultY) {
+        return getOrCreate(id, defaultX, defaultY).x();
+    }
+
+    public int getY(String id, int defaultX, int defaultY) {
+        return getOrCreate(id, defaultX, defaultY).y();
     }
 
     public void setPosition(String id, int x, int y) {
@@ -62,6 +66,10 @@ public final class HudPositionManager {
             componentsObject.add(entry.getKey(), componentObject);
         }
         return componentsObject;
+    }
+
+    private Position getOrCreate(String id, int defaultX, int defaultY) {
+        return positions.computeIfAbsent(id, key -> new Position(Math.max(0, defaultX), Math.max(0, defaultY)));
     }
 
     private record Position(int x, int y) {

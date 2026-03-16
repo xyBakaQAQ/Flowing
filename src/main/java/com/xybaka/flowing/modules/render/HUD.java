@@ -1,5 +1,7 @@
 package com.xybaka.flowing.modules.render;
 
+import com.xybaka.flowing.gui.inventory.InventoryRenderer;
+import com.xybaka.flowing.gui.targethud.TargetHudRenderer;
 import com.xybaka.flowing.modules.Category;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.ModuleManager;
@@ -20,19 +22,9 @@ public final class HUD extends Module {
     private static final int BACKGROUND_COLOR = ColorUtil.rgba(0, 0, 0, 144);
 
     private final BooleanSetting arrayList = bool("ArrayList", true);
-    private final BooleanSetting keystrokes = bool("Keystrokes", true);
-    private final BooleanSetting keystrokesMouseButtons = bool("Mouse Buttons", true)
-            .visibleWhen(this::shouldRenderKeystrokes)
-            .childOf(keystrokes);
-    private final BooleanSetting keystrokesSpace = bool("Space", true)
-            .visibleWhen(this::shouldRenderKeystrokes)
-            .childOf(keystrokes);
-    private final BooleanSetting keystrokesShift = bool("Shift", false)
-            .visibleWhen(this::shouldRenderKeystrokes)
-            .childOf(keystrokes);
-    private final BooleanSetting keystrokesCps = bool("CPS", false)
-            .visibleWhen(() -> shouldRenderKeystrokes() && shouldRenderKeystrokesMouseButtons())
-            .childOf(keystrokesMouseButtons);
+    private final BooleanSetting targetHud = bool("TargetHud", true);
+    private final BooleanSetting inventory = bool("Inventory", true);
+    private final BooleanSetting notifications = bool("Notifications", true);
 
     public HUD() {
         super("HUD", Category.RENDER, GLFW.GLFW_KEY_UNKNOWN, true);
@@ -42,31 +34,43 @@ public final class HUD extends Module {
         return arrayList.getValue();
     }
 
-    public boolean shouldRenderKeystrokes() {
-        return keystrokes.getValue();
+    public boolean shouldRenderTargetHud() {
+        return targetHud.getValue();
     }
 
-    public boolean shouldRenderKeystrokesMouseButtons() {
-        return keystrokesMouseButtons.getValue();
+    public boolean shouldRenderInventory() {
+        return inventory.getValue();
     }
 
-    public boolean shouldRenderKeystrokesSpace() {
-        return keystrokesSpace.getValue();
-    }
-
-    public boolean shouldRenderKeystrokesShift() {
-        return keystrokesShift.getValue();
-    }
-
-    public boolean shouldRenderKeystrokesCps() {
-        return keystrokesCps.getValue();
+    public boolean shouldRenderNotifications() {
+        return notifications.getValue();
     }
 
     public void render(DrawContext context) {
-        if (!shouldRenderArrayList()) {
-            return;
+        renderArrayListOverlay(context);
+        if (shouldRenderTargetHud()) {
+            renderTargetHud(context);
         }
+        if (shouldRenderInventory()) {
+            renderInventory(context);
+        }
+    }
 
+    public void renderArrayListOverlay(DrawContext context) {
+        if (shouldRenderArrayList()) {
+            renderArrayList(context);
+        }
+    }
+
+    public void renderTargetHud(DrawContext context) {
+        TargetHudRenderer.render(context, this);
+    }
+
+    public void renderInventory(DrawContext context) {
+        InventoryRenderer.render(context, this);
+    }
+
+    private void renderArrayList(DrawContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
         List<Module> enabledModules = ModuleManager.getEnabledModules().stream()
@@ -85,4 +89,3 @@ public final class HUD extends Module {
         }
     }
 }
-

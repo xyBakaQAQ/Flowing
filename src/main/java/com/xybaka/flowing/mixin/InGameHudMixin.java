@@ -1,10 +1,14 @@
 package com.xybaka.flowing.mixin;
 
 import com.xybaka.flowing.gui.keystrokes.KeystrokesRenderer;
+import com.xybaka.flowing.gui.notification.NotificationRenderer;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.render.HUD;
+import com.xybaka.flowing.modules.render.Keystrokes;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,12 +20,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class InGameHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     private void flowing$renderHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        boolean chatOpen = client.currentScreen instanceof ChatScreen;
+
         HUD hud = ModuleManager.getModule(HUD.class);
         if (hud != null && hud.isEnabled()) {
-            hud.render(context);
-            if (hud.shouldRenderKeystrokes()) {
-                KeystrokesRenderer.render(context, hud);
+            if (chatOpen) {
+                hud.renderArrayListOverlay(context);
+            } else {
+                hud.render(context);
             }
+
+            if (!chatOpen && hud.shouldRenderNotifications()) {
+                NotificationRenderer.render(context);
+            }
+        }
+
+        Keystrokes keystrokes = ModuleManager.getModule(Keystrokes.class);
+        if (!chatOpen && keystrokes != null && keystrokes.isEnabled()) {
+            KeystrokesRenderer.render(context, keystrokes);
         }
     }
 

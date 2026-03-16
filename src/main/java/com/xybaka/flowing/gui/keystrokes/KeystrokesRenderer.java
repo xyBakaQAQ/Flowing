@@ -1,7 +1,7 @@
 package com.xybaka.flowing.gui.keystrokes;
 
 import com.xybaka.flowing.gui.component.HudComponent;
-import com.xybaka.flowing.modules.render.HUD;
+import com.xybaka.flowing.modules.render.Keystrokes;
 import com.xybaka.flowing.util.ColorUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -22,34 +22,30 @@ public final class KeystrokesRenderer {
     private KeystrokesRenderer() {
     }
 
-    public static int getWidth() {
-        return WIDTH;
-    }
-
-    public static int getHeight(HUD hud) {
+    public static int getHeight(Keystrokes module) {
         int height = KEY_SIZE * 2 + KEY_GAP;
-        if (hud == null) {
+        if (module == null) {
             return height + KEY_GAP + KEY_SIZE + KEY_GAP + BAR_HEIGHT;
         }
-        if (hud.shouldRenderKeystrokesMouseButtons()) {
+        if (module.shouldRenderMouseButtons()) {
             height += KEY_GAP + KEY_SIZE;
         }
-        if (hud.shouldRenderKeystrokesSpace()) {
+        if (module.shouldRenderSpace()) {
             height += KEY_GAP + BAR_HEIGHT;
         }
-        if (hud.shouldRenderKeystrokesShift()) {
+        if (module.shouldRenderShift()) {
             height += KEY_GAP + BAR_HEIGHT;
         }
         return height;
     }
 
-    public static void render(DrawContext context, HUD hud) {
+    public static void render(DrawContext context, Keystrokes module) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.options == null) {
             return;
         }
 
-        syncComponentSize(hud);
+        syncComponentSize(module);
         int baseX = COMPONENT.getRenderX();
         int baseY = COMPONENT.getRenderY();
         int centerX = baseX + KEY_SIZE + KEY_GAP;
@@ -63,48 +59,48 @@ public final class KeystrokesRenderer {
         renderKey(context, rightX, currentY, KEY_SIZE, KEY_SIZE, "D", client.options.rightKey.isPressed());
         currentY += KEY_SIZE;
 
-        if (hud.shouldRenderKeystrokesMouseButtons()) {
+        if (module.shouldRenderMouseButtons()) {
             currentY += KEY_GAP;
             int rightMouseX = baseX + WIDTH - MOUSE_KEY_WIDTH;
-            String leftLabel = hud.shouldRenderKeystrokesCps() ? "LMB " + CpsCounter.getLeftCps() : "LMB";
-            String rightLabel = hud.shouldRenderKeystrokesCps() ? "RMB " + CpsCounter.getRightCps() : "RMB";
+            String leftLabel = module.shouldRenderCps() ? "LMB " + CpsCounter.getLeftCps() : "LMB";
+            String rightLabel = module.shouldRenderCps() ? "RMB " + CpsCounter.getRightCps() : "RMB";
             renderKey(context, baseX, currentY, MOUSE_KEY_WIDTH, KEY_SIZE, leftLabel, client.options.attackKey.isPressed());
             renderKey(context, rightMouseX, currentY, MOUSE_KEY_WIDTH, KEY_SIZE, rightLabel, client.options.useKey.isPressed());
             currentY += KEY_SIZE;
         }
 
-        if (hud.shouldRenderKeystrokesSpace()) {
+        if (module.shouldRenderSpace()) {
             currentY += KEY_GAP;
-            renderKey(context, baseX, currentY, WIDTH, BAR_HEIGHT, "SPACE", client.options.jumpKey.isPressed());
+            renderKey(context, baseX, currentY, WIDTH, BAR_HEIGHT, "Space", client.options.jumpKey.isPressed());
             currentY += BAR_HEIGHT;
         }
 
-        if (hud.shouldRenderKeystrokesShift()) {
+        if (module.shouldRenderShift()) {
             currentY += KEY_GAP;
-            renderKey(context, baseX, currentY, WIDTH, BAR_HEIGHT, "SHIFT", client.options.sneakKey.isPressed());
+            renderKey(context, baseX, currentY, WIDTH, BAR_HEIGHT, "Shift", client.options.sneakKey.isPressed());
         }
     }
 
-    public static boolean beginDragging(HUD hud, double mouseX, double mouseY) {
-        syncComponentSize(hud);
+    public static boolean beginDragging(Keystrokes module, double mouseX, double mouseY) {
+        syncComponentSize(module);
         return COMPONENT.beginDragging(mouseX, mouseY);
     }
 
-    public static boolean drag(HUD hud, double mouseX, double mouseY) {
-        syncComponentSize(hud);
-        return COMPONENT.drag(mouseX, mouseY);
+    public static boolean drag(Keystrokes module, double mouseX, double mouseY, boolean snap) {
+        syncComponentSize(module);
+        return COMPONENT.drag(mouseX, mouseY, snap);
     }
 
     public static boolean isDragging() {
         return COMPONENT.isDragging();
     }
 
-    public static boolean stopDragging() {
-        return COMPONENT.stopDragging();
+    public static void stopDragging() {
+        COMPONENT.stopDragging();
     }
 
-    private static void syncComponentSize(HUD hud) {
-        COMPONENT.setSize(WIDTH, getHeight(hud));
+    private static void syncComponentSize(Keystrokes module) {
+        COMPONENT.setSize(WIDTH, getHeight(module));
     }
 
     private static void renderKey(DrawContext context, int x, int y, int width, int height, String label, boolean pressed) {
@@ -120,3 +116,5 @@ public final class KeystrokesRenderer {
         context.drawText(textRenderer, label, textX, textY, KEY_TEXT_COLOR, true);
     }
 }
+
+

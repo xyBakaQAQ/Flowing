@@ -45,6 +45,10 @@ public final class ConfigManager {
         }
     }
 
+    public static boolean isLoading() {
+        return loading;
+    }
+
     public static void load() {
         try {
             Files.createDirectories(CONFIG_DIR);

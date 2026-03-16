@@ -1,12 +1,19 @@
 package com.xybaka.flowing.mixin;
 
+import com.xybaka.flowing.gui.component.HudSnapHelper;
+import com.xybaka.flowing.gui.inventory.InventoryRenderer;
 import com.xybaka.flowing.gui.keystrokes.CpsCounter;
 import com.xybaka.flowing.gui.keystrokes.KeystrokesRenderer;
+import com.xybaka.flowing.gui.scoreboard.ScoreboardRenderer;
+import com.xybaka.flowing.gui.targethud.TargetHudRenderer;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.render.HUD;
+import com.xybaka.flowing.modules.render.Keystrokes;
+import com.xybaka.flowing.modules.render.Scoreboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Window;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
@@ -21,13 +28,9 @@ public abstract class MouseMixin {
     @Shadow @Final private MinecraftClient client;
 
     @Inject(method = "onCursorPos", at = @At("HEAD"), cancellable = true)
-    private void flowing$dragKeystrokes(long window, double x, double y, CallbackInfo ci) {
+    private void flowing$dragHudComponents(long window, double x, double y, CallbackInfo ci) {
         if (!(client.currentScreen instanceof ChatScreen)) {
-            return;
-        }
-
-        HUD hud = ModuleManager.getModule(HUD.class);
-        if (hud == null || !hud.isEnabled() || !hud.shouldRenderKeystrokes() || !KeystrokesRenderer.isDragging()) {
+            HudSnapHelper.clearGuides();
             return;
         }
 
@@ -38,9 +41,37 @@ public abstract class MouseMixin {
 
         double scaledX = x * clientWindow.getScaledWidth() / clientWindow.getWidth();
         double scaledY = y * clientWindow.getScaledHeight() / clientWindow.getHeight();
-        if (KeystrokesRenderer.drag(hud, scaledX, scaledY)) {
+        boolean snap = isShiftDown(clientWindow);
+
+        Keystrokes keystrokes = ModuleManager.getModule(Keystrokes.class);
+        if (keystrokes != null && keystrokes.isEnabled() && KeystrokesRenderer.isDragging() && KeystrokesRenderer.drag(keystrokes, scaledX, scaledY, snap)) {
             ci.cancel();
+            return;
         }
+
+        Scoreboard scoreboard = ModuleManager.getModule(Scoreboard.class);
+        if (scoreboard != null && scoreboard.isEnabled() && ScoreboardRenderer.isDragging() && ScoreboardRenderer.drag(scaledX, scaledY, snap)) {
+            ci.cancel();
+            return;
+        }
+
+        HUD hud = ModuleManager.getModule(HUD.class);
+        if (hud == null || !hud.isEnabled()) {
+            HudSnapHelper.clearGuides();
+            return;
+        }
+
+        if (hud.shouldRenderTargetHud() && TargetHudRenderer.isDragging() && TargetHudRenderer.drag(hud, scaledX, scaledY, snap)) {
+            ci.cancel();
+            return;
+        }
+
+        if (hud.shouldRenderInventory() && InventoryRenderer.isDragging() && InventoryRenderer.drag(hud, scaledX, scaledY, snap)) {
+            ci.cancel();
+            return;
+        }
+
+        HudSnapHelper.clearGuides();
     }
 
     @Inject(method = "onMouseButton", at = @At("HEAD"))
@@ -57,6 +88,16 @@ public abstract class MouseMixin {
                 && button == GLFW.GLFW_MOUSE_BUTTON_LEFT
                 && action == GLFW.GLFW_RELEASE) {
             KeystrokesRenderer.stopDragging();
+            ScoreboardRenderer.stopDragging();
+            TargetHudRenderer.stopDragging();
+            InventoryRenderer.stopDragging();
+            HudSnapHelper.clearGuides();
         }
+    }
+
+    private boolean isShiftDown(Window clientWindow) {
+        long handle = clientWindow.getHandle();
+        return InputUtil.isKeyPressed(handle, GLFW.GLFW_KEY_LEFT_SHIFT)
+                || InputUtil.isKeyPressed(handle, GLFW.GLFW_KEY_RIGHT_SHIFT);
     }
 }

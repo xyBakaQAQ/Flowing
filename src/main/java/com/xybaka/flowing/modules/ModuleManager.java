@@ -9,6 +9,8 @@ import com.xybaka.flowing.modules.render.Cape;
 import com.xybaka.flowing.modules.render.ESP;
 import com.xybaka.flowing.modules.render.FullBright;
 import com.xybaka.flowing.modules.render.HUD;
+import com.xybaka.flowing.modules.render.Keystrokes;
+import com.xybaka.flowing.modules.render.Scoreboard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,16 +51,15 @@ public final class ModuleManager {
     }
 
     private void initializeModules() {
-        // CLIENT
         registerModule(new ClickGUI());
         registerModule(new Target());
         registerModule(new Teams());
 
-        // MOVEMENT
         registerModule(new Sprint());
 
-        // RENDER
         registerModule(new HUD());
+        registerModule(new Keystrokes());
+        registerModule(new Scoreboard());
         registerModule(new Camera());
         registerModule(new Cape());
         registerModule(new ESP());

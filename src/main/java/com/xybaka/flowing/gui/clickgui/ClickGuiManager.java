@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
+
 public final class ClickGuiManager {
     private static final ClickGuiManager INSTANCE = new ClickGuiManager();
 
@@ -112,8 +114,10 @@ public final class ClickGuiManager {
     }
 
     public String getKeyName(Module module) {
-        String displayName = KeyUtil.toDisplayName(module.getKey());
-        return "UNKNOWN".equals(displayName) ? "NONE" : displayName;
+        if (module.getKey() == GLFW_KEY_UNKNOWN) {
+            return "";
+        }
+        return '[' + KeyUtil.toDisplayName(module.getKey()) + ']';
     }
 
     public Category getSelectedCategory() {
@@ -236,19 +240,20 @@ public final class ClickGuiManager {
     }
 
     public String getSettingLabel(Setting setting) {
+        String displayName = getDisplaySettingName(setting);
         if (setting instanceof BooleanSetting booleanSetting) {
-            return setting.getName() + ": " + (booleanSetting.getValue() ? "ON" : "OFF");
+            return displayName + ": " + (booleanSetting.getValue() ? "ON" : "OFF");
         }
 
         if (setting instanceof ModeSetting modeSetting) {
-            return setting.getName() + ": " + modeSetting.getValue();
+            return displayName + ": " + modeSetting.getValue();
         }
 
         if (setting instanceof NumberSetting numberSetting) {
-            return setting.getName() + ": " + trimNumber(numberSetting.getValue());
+            return displayName + ": " + trimNumber(numberSetting.getValue());
         }
 
-        return setting.getName();
+        return displayName;
     }
 
     public double getNumberPercent(NumberSetting setting) {
@@ -270,5 +275,16 @@ public final class ClickGuiManager {
         }
 
         return Double.toString(value);
+    }
+
+    private String getDisplaySettingName(Setting setting) {
+        String name = setting.getName();
+        if (name.startsWith("Attack ")) {
+            return name.substring("Attack ".length());
+        }
+        if (name.startsWith("Vision ")) {
+            return name.substring("Vision ".length());
+        }
+        return name;
     }
 }

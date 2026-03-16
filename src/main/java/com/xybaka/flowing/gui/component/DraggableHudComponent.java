@@ -64,10 +64,8 @@ public final class DraggableHudComponent {
         return dragging;
     }
 
-    public boolean stopDragging() {
-        boolean wasDragging = dragging;
+    public void stopDragging() {
         dragging = false;
-        return wasDragging;
     }
 
     private int clamp(int value, int min, int max) {

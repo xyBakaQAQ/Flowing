@@ -1,5 +1,6 @@
 package com.xybaka.flowing.gui.clickgui;
 
+import com.xybaka.flowing.gui.component.HudComponent;
 import com.xybaka.flowing.modules.Category;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
@@ -25,6 +26,13 @@ public final class ClickGuiScreen extends Screen {
     private static final int SETTING_INDENT = 16;
     private static final int SETTING_LEVEL_WIDTH = 14;
     private static final int MODE_INDENT = 30;
+    private static final int CONTENT_PADDING = 6;
+    private static final int CONTENT_BOTTOM_PADDING = 12;
+    private static final int SCROLL_STEP = 18;
+    private static final int SCROLLBAR_WIDTH = 3;
+    private static final int SCROLLBAR_MARGIN = 6;
+    private static final int SCROLLBAR_TRACK_COLOR = ColorUtil.rgba(255, 255, 255, 26);
+    private static final int SCROLLBAR_THUMB_COLOR = ColorUtil.rgba(168, 208, 255, 210);
     private static final int TEXT_COLOR = ColorUtil.rgb(255, 255, 255);
     private static final int MUTED_TEXT_COLOR = ColorUtil.rgb(211, 216, 224);
     private static final int ENABLED_TEXT_COLOR = ColorUtil.rgb(200, 255, 176);
@@ -45,23 +53,33 @@ public final class ClickGuiScreen extends Screen {
     private static final int SELECTED_CATEGORY_COLOR = ColorUtil.rgb(49, 70, 95);
     private static final int BORDER_COLOR = ColorUtil.rgb(81, 101, 125);
 
+    private static final HudComponent POSITION = new HudComponent(
+            "clickgui",
+            WindowUtil.getCenteredX(PANEL_WIDTH),
+            WindowUtil.getCenteredY(PANEL_HEIGHT)
+    );
+
     private final ClickGuiManager manager = ClickGuiManager.getInstance();
     private int panelX;
     private int panelY;
     private boolean dragging;
     private int dragOffsetX;
     private int dragOffsetY;
+    private int contentScroll;
 
     public ClickGuiScreen() {
         super(Text.literal("Flowing ClickGUI"));
-        this.panelX = WindowUtil.getCenteredX(PANEL_WIDTH);
-        this.panelY = WindowUtil.getCenteredY(PANEL_HEIGHT);
+        POSITION.setSize(PANEL_WIDTH, PANEL_HEIGHT);
+        this.panelX = POSITION.getRenderX();
+        this.panelY = POSITION.getRenderY();
     }
 
     @Override
     protected void init() {
-        panelX = WindowUtil.getCenteredX(PANEL_WIDTH);
-        panelY = WindowUtil.getCenteredY(PANEL_HEIGHT);
+        POSITION.setSize(PANEL_WIDTH, PANEL_HEIGHT);
+        panelX = POSITION.getRenderX();
+        panelY = POSITION.getRenderY();
+        clampContentScroll();
     }
 
     @Override
@@ -76,6 +94,10 @@ public final class ClickGuiScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         manager.syncVisibleState();
+        POSITION.setSize(PANEL_WIDTH, PANEL_HEIGHT);
+        panelX = POSITION.getRenderX();
+        panelY = POSITION.getRenderY();
+        clampContentScroll();
 
         int panelRight = panelX + PANEL_WIDTH;
         int panelBottom = panelY + PANEL_HEIGHT;
@@ -90,11 +112,11 @@ public final class ClickGuiScreen extends Screen {
         context.drawText(textRenderer, title, panelX + 10, panelY + 7, TEXT_COLOR, true);
 
         Text hint = manager.getBindingModule() == null
-                ? Text.literal("LMB toggle | RMB settings | Drag header")
+                ? Text.literal("LMB toggle | RMB settings | Wheel scroll | Drag header")
                 : Text.literal("Binding " + manager.getBindingModule().getName() + " - press a key, ESC clears");
         context.drawText(textRenderer, hint, panelX + 126, panelY + 7, MUTED_TEXT_COLOR, false);
 
-        int categoryY = panelY + HEADER_HEIGHT + 10;
+        int categoryY = getContentTop();
         for (Category category : manager.getCategories()) {
             int top = categoryY - 4;
             int bottom = categoryY + 12;
@@ -107,7 +129,8 @@ public final class ClickGuiScreen extends Screen {
             categoryY += 16;
         }
 
-        int moduleY = panelY + HEADER_HEIGHT + 10;
+        context.enableScissor(contentX - 6, getContentTop() - 4, panelRight - 12, getContentBottom());
+        int moduleY = getContentTop() - contentScroll;
         for (Module module : manager.getVisibleModules()) {
             int rowTop = moduleY - 4;
             int rowBottom = moduleY + MODULE_ROW_HEIGHT - 4;
@@ -118,29 +141,25 @@ public final class ClickGuiScreen extends Screen {
             int nameColor = manager.isEnabled(module) ? ENABLED_TEXT_COLOR : TEXT_COLOR;
             context.drawText(textRenderer, module.getName(), contentX, moduleY, nameColor, true);
 
-            if (manager.hasSettings(module)) {
-                String expandState = manager.isExpanded(module) ? "-" : "+";
-                context.drawText(textRenderer, expandState, panelRight - 54, moduleY, MUTED_TEXT_COLOR, true);
-            }
+            int expandX = panelRight - 24;
+            String expandState = manager.hasSettings(module) ? (manager.isExpanded(module) ? "-" : "+") : " ";
+            context.drawText(textRenderer, expandState, expandX, moduleY, MUTED_TEXT_COLOR, true);
 
-            String bind = manager.isBinding(module) ? "..." : manager.getKeyName(module);
-            int bindWidth = textRenderer.getWidth(bind);
-            context.drawText(textRenderer, bind, panelRight - 18 - bindWidth, moduleY, MUTED_TEXT_COLOR, true);
+            String bind = manager.isBinding(module) ? "[...]" : manager.getKeyName(module);
+            if (!bind.isEmpty()) {
+                int bindWidth = textRenderer.getWidth(bind);
+                context.drawText(textRenderer, bind, expandX - 8 - bindWidth, moduleY, MUTED_TEXT_COLOR, true);
+            }
 
             moduleY += MODULE_ROW_HEIGHT;
             if (manager.isExpanded(module)) {
                 for (Setting setting : manager.getVisibleSettings(module)) {
                     moduleY += renderSettingBlock(context, setting, contentX, panelRight, moduleY);
-                    if (moduleY > panelBottom - 18) {
-                        break;
-                    }
                 }
             }
-
-            if (moduleY > panelBottom - 18) {
-                break;
-            }
         }
+        context.disableScissor();
+        renderScrollbar(context, panelRight);
 
         super.render(context, mouseX, mouseY, delta);
     }
@@ -156,12 +175,13 @@ public final class ClickGuiScreen extends Screen {
             return true;
         }
 
-        int categoryY = panelY + HEADER_HEIGHT + 10;
+        int categoryY = getContentTop();
         for (Category category : manager.getCategories()) {
             int top = categoryY - 4;
             int bottom = categoryY + 12;
             if (mouseX >= panelX + 5 && mouseX <= panelX + CATEGORY_WIDTH - 5 && mouseY >= top && mouseY <= bottom) {
                 manager.selectCategory(category);
+                contentScroll = 0;
                 return true;
             }
             categoryY += 16;
@@ -169,7 +189,13 @@ public final class ClickGuiScreen extends Screen {
 
         int panelRight = panelX + PANEL_WIDTH;
         int contentX = panelX + CATEGORY_WIDTH + 12;
-        int moduleY = panelY + HEADER_HEIGHT + 10;
+        int moduleY = getContentTop() - contentScroll;
+
+        if (!isHoveringContent(mouseX, mouseY)) {
+            manager.stopSliding();
+            manager.closeModeList();
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
 
         for (Module module : manager.getVisibleModules()) {
             int rowTop = moduleY - 4;
@@ -193,6 +219,7 @@ public final class ClickGuiScreen extends Screen {
                     manager.stopSliding();
                     manager.closeModeList();
                     manager.toggleExpanded(module);
+                    clampContentScroll();
                     return true;
                 }
             }
@@ -219,8 +246,12 @@ public final class ClickGuiScreen extends Screen {
         manager.syncVisibleState();
 
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && dragging) {
-            panelX = clampPanelX((int) mouseX - dragOffsetX);
-            panelY = clampPanelY((int) mouseY - dragOffsetY);
+            int targetX = clampPanelX((int) mouseX - dragOffsetX);
+            int targetY = clampPanelY((int) mouseY - dragOffsetY);
+            int bottomOffset = height - PANEL_HEIGHT - targetY;
+            POSITION.setPosition(targetX, bottomOffset);
+            panelX = POSITION.getRenderX();
+            panelY = POSITION.getRenderY();
             return true;
         }
 
@@ -242,6 +273,22 @@ public final class ClickGuiScreen extends Screen {
             manager.stopSliding();
         }
         return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (!isHoveringContent(mouseX, mouseY)) {
+            return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        }
+
+        if (verticalAmount == 0.0D) {
+            return true;
+        }
+
+        contentScroll -= (int) Math.round(verticalAmount * SCROLL_STEP);
+        clampContentScroll();
+        manager.stopSliding();
+        return true;
     }
 
     @Override
@@ -336,6 +383,7 @@ public final class ClickGuiScreen extends Screen {
         if (hoveredSetting) {
             manager.clearBindingTarget();
             if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && manager.handleSettingLeftClick(setting)) {
+                clampContentScroll();
                 if (setting instanceof NumberSetting numberSetting) {
                     updateNumberSettingFromMouse(numberSetting, mouseX, contentX, panelRight, setting);
                 }
@@ -343,6 +391,7 @@ public final class ClickGuiScreen extends Screen {
             }
 
             if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && manager.handleSettingRightClick(setting)) {
+                clampContentScroll();
                 return getSettingBlockHeight(setting);
             }
         }
@@ -392,6 +441,68 @@ public final class ClickGuiScreen extends Screen {
         return mouseX >= panelX && mouseX <= panelX + PANEL_WIDTH && mouseY >= panelY && mouseY <= panelY + HEADER_HEIGHT;
     }
 
+    private boolean isHoveringContent(double mouseX, double mouseY) {
+        return mouseX >= panelX + CATEGORY_WIDTH
+                && mouseX <= panelX + PANEL_WIDTH
+                && mouseY >= getContentTop() - 4
+                && mouseY <= getContentBottom();
+    }
+
+    private int getContentTop() {
+        return panelY + HEADER_HEIGHT + CONTENT_PADDING;
+    }
+
+    private int getContentBottom() {
+        return panelY + PANEL_HEIGHT - CONTENT_BOTTOM_PADDING;
+    }
+
+    private int getVisibleContentHeight() {
+        return getContentBottom() - getContentTop();
+    }
+
+    private void clampContentScroll() {
+        contentScroll = Math.max(0, Math.min(contentScroll, getMaxContentScroll()));
+    }
+
+    private int getMaxContentScroll() {
+        return Math.max(0, getTotalContentHeight() - getVisibleContentHeight());
+    }
+
+    private void renderScrollbar(DrawContext context, int panelRight) {
+        int maxScroll = getMaxContentScroll();
+        if (maxScroll <= 0) {
+            return;
+        }
+
+        int trackLeft = panelRight - SCROLLBAR_MARGIN - SCROLLBAR_WIDTH;
+        int trackTop = getContentTop() - 2;
+        int trackBottom = getContentBottom() - 2;
+        int trackHeight = trackBottom - trackTop;
+        if (trackHeight <= 0) {
+            return;
+        }
+
+        int thumbHeight = Math.max(24, (int) Math.round((double) getVisibleContentHeight() / getTotalContentHeight() * trackHeight));
+        int thumbTravel = Math.max(0, trackHeight - thumbHeight);
+        int thumbTop = trackTop + (int) Math.round((double) contentScroll / maxScroll * thumbTravel);
+
+        context.fill(trackLeft, trackTop, trackLeft + SCROLLBAR_WIDTH, trackBottom, SCROLLBAR_TRACK_COLOR);
+        context.fill(trackLeft, thumbTop, trackLeft + SCROLLBAR_WIDTH, thumbTop + thumbHeight, SCROLLBAR_THUMB_COLOR);
+    }
+
+    private int getTotalContentHeight() {
+        int height = 0;
+        for (Module module : manager.getVisibleModules()) {
+            height += MODULE_ROW_HEIGHT;
+            if (manager.isExpanded(module)) {
+                for (Setting setting : manager.getVisibleSettings(module)) {
+                    height += getSettingBlockHeight(setting);
+                }
+            }
+        }
+        return height;
+    }
+
     private int clampPanelX(int x) {
         return Math.max(0, Math.min(x, width - PANEL_WIDTH));
     }
@@ -400,3 +511,7 @@ public final class ClickGuiScreen extends Screen {
         return Math.max(0, Math.min(y, height - PANEL_HEIGHT));
     }
 }
+
+
+
+

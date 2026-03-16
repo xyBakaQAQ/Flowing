@@ -3,6 +3,8 @@ package com.xybaka.flowing.modules;
 import com.xybaka.flowing.config.ConfigManager;
 import com.xybaka.flowing.event.EventListener;
 import com.xybaka.flowing.event.features.KeyboardEvent;
+import com.xybaka.flowing.gui.notification.NotificationManager;
+import com.xybaka.flowing.gui.notification.NotificationType;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
@@ -78,6 +80,14 @@ public abstract class Module implements EventListener {
             onDisable();
         }
 
+        if (!ConfigManager.isLoading() && shouldNotifyStateChange()) {
+            NotificationManager.push(
+                    getName(),
+                    enabled ? "Enabled" : "Disabled",
+                    enabled ? NotificationType.SUCCESS : NotificationType.ERROR
+            );
+        }
+
         ConfigManager.requestSave();
     }
 
@@ -131,5 +141,9 @@ public abstract class Module implements EventListener {
     }
 
     protected void onDisable() {
+    }
+
+    protected boolean shouldNotifyStateChange() {
+        return true;
     }
 }

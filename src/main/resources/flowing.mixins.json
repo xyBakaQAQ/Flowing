@@ -7,12 +7,14 @@
 		"ChatScreenMixin",
 		"EntityMixin",
 		"GameRendererMixin",
+		"Accessor.InGameHudAccessor",
 		"InGameHudMixin",
 		"InGameOverlayRendererMixin",
 		"KeyboardMixin",
 		"LightmapTextureManagerMixin",
 		"MouseMixin",
 		"PlayerListEntryMixin",
+		"ScoreboardHudMixin",
 		"WorldRendererMixin"
 	],
 	"injectors": {
@@ -22,3 +24,4 @@
 		"requireAnnotations": true
 	}
 }
+

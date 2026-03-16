@@ -3,9 +3,10 @@ package com.xybaka.flowing.mixin;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.client.Teams;
 import com.xybaka.flowing.modules.render.ESP;
+import com.xybaka.flowing.util.TargetUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -44,10 +45,11 @@ public abstract class EntityMixin {
     }
 
     private boolean shouldApplyGlow(ESP module, Entity entity) {
-        if (module == null || !module.shouldGlow() || !(entity instanceof PlayerEntity)) {
+        if (module == null || !module.shouldGlow() || !(entity instanceof LivingEntity livingEntity)) {
             return false;
         }
 
-        return !module.shouldIgnoreSelf() || entity != MinecraftClient.getInstance().player;
+        return (!module.shouldIgnoreSelf() || entity != MinecraftClient.getInstance().player)
+                && TargetUtil.isValidTarget(TargetUtil.Profile.VISION, livingEntity);
     }
 }

@@ -49,7 +49,24 @@ public final class KeyUtil {
     }
 
     public static String toDisplayName(int key) {
-        String configKey = toConfigKey(key);
-        return configKey.startsWith("GLFW_KEY_") ? configKey.substring("GLFW_KEY_".length()) : configKey;
+        return switch (key) {
+            case GLFW.GLFW_KEY_UNKNOWN -> "NONE";
+            case GLFW.GLFW_KEY_BACKSPACE -> "BACK";
+            case GLFW.GLFW_KEY_ESCAPE -> "ESC";
+            case GLFW.GLFW_KEY_LEFT_SHIFT -> "LSHIFT";
+            case GLFW.GLFW_KEY_RIGHT_SHIFT -> "RSHIFT";
+            case GLFW.GLFW_KEY_LEFT_CONTROL -> "LCTRL";
+            case GLFW.GLFW_KEY_RIGHT_CONTROL -> "RCTRL";
+            case GLFW.GLFW_KEY_LEFT_ALT -> "LALT";
+            case GLFW.GLFW_KEY_RIGHT_ALT -> "RALT";
+            case GLFW.GLFW_KEY_LEFT_SUPER -> "LWIN";
+            case GLFW.GLFW_KEY_RIGHT_SUPER -> "RWIN";
+            case GLFW.GLFW_KEY_INSERT -> "INS";
+            case GLFW.GLFW_KEY_DELETE -> "DEL";
+            case GLFW.GLFW_KEY_PAGE_UP -> "PGUP";
+            case GLFW.GLFW_KEY_PAGE_DOWN -> "PGDN";
+            case GLFW.GLFW_KEY_CAPS_LOCK -> "CAPS";
+            default -> "K" + key;
+        };
     }
 }
