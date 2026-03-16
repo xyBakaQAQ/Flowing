@@ -10,8 +10,10 @@ import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.StreamSupport;
 
 public final class TargetUtil {
@@ -44,7 +46,7 @@ public final class TargetUtil {
             return crosshairTarget;
         }
 
-        return getNearestTarget(profile, range);
+        return getBestTarget(profile, range);
     }
 
     public static LivingEntity getCrosshairTarget() {
@@ -131,7 +133,40 @@ public final class TargetUtil {
         return isValidTarget(profile, player, target, range * range);
     }
 
-    private static LivingEntity getNearestTarget(Profile profile, double range) {
+    public static boolean isVisionRenderTarget(LivingEntity target) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        if (player == null || target == null) {
+            return false;
+        }
+
+        Target module = ModuleManager.getModule(Target.class);
+        if (target == player) {
+            return module != null && module.visionSelf();
+        }
+
+        return isValidTarget(Profile.VISION, player, target, Double.MAX_VALUE);
+    }
+
+    public static boolean isVisionPlayerRenderTarget(PlayerEntity target) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        if (player == null || target == null || target.isSpectator()) {
+            return false;
+        }
+
+        Target module = ModuleManager.getModule(Target.class);
+        if (target == player) {
+            return module != null && module.visionSelf();
+        }
+
+        return module != null
+                && module.visionPlayers()
+                && isAllowedByDeadSetting(Profile.VISION, module, target)
+                && isAllowedByInvisibleSetting(Profile.VISION, module, target);
+    }
+
+    private static LivingEntity getBestTarget(Profile profile, double range) {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         if (player == null || client.world == null) {
@@ -141,13 +176,35 @@ public final class TargetUtil {
         double maxSquaredDistance = range * range;
 
         return StreamSupport.stream(client.world.getEntities().spliterator(), false)
-                .filter(Entity.class::isInstance)
+                .filter(Objects::nonNull)
                 .map(Entity.class::cast)
                 .filter(LivingEntity.class::isInstance)
                 .map(LivingEntity.class::cast)
                 .filter(target -> isValidTarget(profile, player, target, maxSquaredDistance))
-                .min(Comparator.comparingDouble(player::squaredDistanceTo))
+                .min(getTargetComparator(profile, player))
                 .orElse(null);
+    }
+
+    private static Comparator<LivingEntity> getTargetComparator(Profile profile, ClientPlayerEntity player) {
+        if (profile != Profile.ATTACK) {
+            return Comparator.comparingDouble(target -> player.squaredDistanceTo(target));
+        }
+
+        Target module = ModuleManager.getModule(Target.class);
+        String mode = module == null ? "Distance" : module.attackMode();
+        return switch (mode) {
+            case "Health" -> Comparator.<LivingEntity>comparingDouble(LivingEntity::getHealth)
+                    .thenComparingDouble(target -> player.squaredDistanceTo(target));
+            case "FOV" -> Comparator.<LivingEntity>comparingDouble(target -> getFovDistance(player, target))
+                    .thenComparingDouble(target -> player.squaredDistanceTo(target));
+            default -> Comparator.comparingDouble(target -> player.squaredDistanceTo(target));
+        };
+    }
+
+    private static double getFovDistance(ClientPlayerEntity player, LivingEntity target) {
+        Vec3d look = player.getRotationVec(1.0F).normalize();
+        Vec3d toTarget = target.getEyePos().subtract(player.getEyePos()).normalize();
+        return 1.0D - look.dotProduct(toTarget);
     }
 
     private static boolean isValidTarget(Profile profile, ClientPlayerEntity player, LivingEntity target, double maxSquaredDistance) {

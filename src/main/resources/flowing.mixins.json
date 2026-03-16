@@ -3,18 +3,22 @@
 	"package": "com.xybaka.flowing.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"BlockViewMixin",
 		"CameraMixin",
 		"ChatScreenMixin",
 		"EntityMixin",
+		"EntityRendererMixin",
 		"GameRendererMixin",
+		"HandledScreenMixin",
 		"Accessor.InGameHudAccessor",
+		"Accessor.MinecraftClientAccessor",
 		"InGameHudMixin",
 		"InGameOverlayRendererMixin",
 		"KeyboardMixin",
 		"LightmapTextureManagerMixin",
+		"MinecraftClientMixin",
 		"MouseMixin",
 		"PlayerListEntryMixin",
-		"ScoreboardHudMixin",
 		"WorldRendererMixin"
 	],
 	"injectors": {
@@ -24,4 +28,3 @@
 		"requireAnnotations": true
 	}
 }
-

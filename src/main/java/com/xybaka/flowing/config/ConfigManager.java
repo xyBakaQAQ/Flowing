@@ -10,6 +10,7 @@ import com.xybaka.flowing.gui.component.HudPositionManager;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
+import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
@@ -119,6 +120,8 @@ public final class ConfigManager {
                 settingsObject.addProperty(setting.getName(), modeSetting.getValue());
             } else if (setting instanceof NumberSetting numberSetting) {
                 settingsObject.addProperty(setting.getName(), numberSetting.getValue());
+            } else if (setting instanceof ColorSetting colorSetting) {
+                settingsObject.addProperty(setting.getName(), colorSetting.getColor());
             }
         }
 
@@ -164,6 +167,11 @@ public final class ConfigManager {
 
         if (setting instanceof NumberSetting numberSetting) {
             numberSetting.setValue(value.getAsDouble());
+            return;
+        }
+
+        if (setting instanceof ColorSetting colorSetting) {
+            colorSetting.setAlpha(value.getAsInt() >> 24 & 0xFF);
         }
     }
 }

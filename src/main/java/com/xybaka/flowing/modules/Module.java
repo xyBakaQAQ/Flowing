@@ -6,6 +6,7 @@ import com.xybaka.flowing.event.features.KeyboardEvent;
 import com.xybaka.flowing.gui.notification.NotificationManager;
 import com.xybaka.flowing.gui.notification.NotificationType;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
+import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
@@ -128,6 +129,10 @@ public abstract class Module implements EventListener {
 
     protected final NumberSetting number(String name, double defaultValue, double min, double max, double increment) {
         return new NumberSetting(name, defaultValue, min, max, increment, this);
+    }
+
+    protected final ColorSetting color(String name, int red, int green, int blue, int alpha) {
+        return new ColorSetting(name, red, green, blue, alpha, this);
     }
 
     @Override

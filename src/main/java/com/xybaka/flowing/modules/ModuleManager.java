@@ -3,13 +3,18 @@ package com.xybaka.flowing.modules;
 import com.xybaka.flowing.modules.client.ClickGUI;
 import com.xybaka.flowing.modules.client.Target;
 import com.xybaka.flowing.modules.client.Teams;
+import com.xybaka.flowing.modules.combat.Trigger;
 import com.xybaka.flowing.modules.movement.Sprint;
+import com.xybaka.flowing.modules.player.AutoTool;
+import com.xybaka.flowing.modules.player.GhostHand;
+import com.xybaka.flowing.modules.player.InventoryHelper;
 import com.xybaka.flowing.modules.render.Camera;
 import com.xybaka.flowing.modules.render.Cape;
 import com.xybaka.flowing.modules.render.ESP;
 import com.xybaka.flowing.modules.render.FullBright;
 import com.xybaka.flowing.modules.render.HUD;
 import com.xybaka.flowing.modules.render.Keystrokes;
+import com.xybaka.flowing.modules.render.NameTags;
 import com.xybaka.flowing.modules.render.Scoreboard;
 
 import java.util.ArrayList;
@@ -51,14 +56,26 @@ public final class ModuleManager {
     }
 
     private void initializeModules() {
+        // Combat
+        registerModule(new Trigger());
+
+        // Movement
+        registerModule(new Sprint());
+
+        // Plyaer
+        registerModule(new AutoTool());
+        registerModule(new InventoryHelper());
+        registerModule(new GhostHand());
+
+        // Client
         registerModule(new ClickGUI());
         registerModule(new Target());
         registerModule(new Teams());
 
-        registerModule(new Sprint());
-
+        // Render
         registerModule(new HUD());
         registerModule(new Keystrokes());
+        registerModule(new NameTags());
         registerModule(new Scoreboard());
         registerModule(new Camera());
         registerModule(new Cape());

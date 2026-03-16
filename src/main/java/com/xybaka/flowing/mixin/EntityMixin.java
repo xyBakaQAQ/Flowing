@@ -4,7 +4,6 @@ import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.client.Teams;
 import com.xybaka.flowing.modules.render.ESP;
 import com.xybaka.flowing.util.TargetUtil;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -45,11 +44,9 @@ public abstract class EntityMixin {
     }
 
     private boolean shouldApplyGlow(ESP module, Entity entity) {
-        if (module == null || !module.shouldGlow() || !(entity instanceof LivingEntity livingEntity)) {
-            return false;
-        }
-
-        return (!module.shouldIgnoreSelf() || entity != MinecraftClient.getInstance().player)
-                && TargetUtil.isValidTarget(TargetUtil.Profile.VISION, livingEntity);
+        return module != null
+                && module.shouldGlow()
+                && entity instanceof LivingEntity livingEntity
+                && TargetUtil.isVisionRenderTarget(livingEntity);
     }
 }

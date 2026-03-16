@@ -4,10 +4,14 @@ import com.xybaka.flowing.event.features.KeyboardEvent;
 import com.xybaka.flowing.modules.Category;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
+import com.xybaka.flowing.modules.settings.ModeSetting;
 import org.lwjgl.glfw.GLFW;
 
 public final class Target extends Module {
     private final BooleanSetting attackTarget = bool("AttackTarget", true);
+    private final ModeSetting attackMode = mode("Mode", "Distance", "Distance", "Health", "FOV")
+            .visibleWhen(this::attackTarget)
+            .childOf(attackTarget);
     private final BooleanSetting attackPlayers = bool("Attack Players", true)
             .visibleWhen(this::attackTarget)
             .childOf(attackTarget);
@@ -26,6 +30,9 @@ public final class Target extends Module {
 
     private final BooleanSetting visionTarget = bool("VisionTarget", true);
     private final BooleanSetting visionPlayers = bool("Vision Players", true)
+            .visibleWhen(this::visionTarget)
+            .childOf(visionTarget);
+    private final BooleanSetting visionSelf = bool("Vision Self", false)
             .visibleWhen(this::visionTarget)
             .childOf(visionTarget);
     private final BooleanSetting visionMobs = bool("Vision Mobs", true)
@@ -58,6 +65,10 @@ public final class Target extends Module {
         return attackTarget.getValue();
     }
 
+    public String attackMode() {
+        return attackMode.getValue();
+    }
+
     public boolean attackPlayers() {
         return attackTarget() && attackPlayers.getValue();
     }
@@ -84,6 +95,10 @@ public final class Target extends Module {
 
     public boolean visionPlayers() {
         return visionTarget() && visionPlayers.getValue();
+    }
+
+    public boolean visionSelf() {
+        return visionTarget() && visionSelf.getValue();
     }
 
     public boolean visionMobs() {
