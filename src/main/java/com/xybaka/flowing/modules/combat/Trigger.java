@@ -1,19 +1,16 @@
 package com.xybaka.flowing.modules.combat;
 
-import com.xybaka.flowing.event.features.TickEvent;
+import com.xybaka.flowing.event.features.InputEvent;
 import com.xybaka.flowing.mixin.Accessor.MinecraftClientAccessor;
 import com.xybaka.flowing.modules.Category;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
+import com.xybaka.flowing.util.InventoryUtils;
 import com.xybaka.flowing.util.TargetUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.AxeItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.MaceItem;
-import net.minecraft.item.SwordItem;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -25,7 +22,7 @@ public final class Trigger extends Module {
     private final NumberSetting chance = number("Chance", 100.0D, 0.0D, 100.0D, 1.0D);
     private final BooleanSetting weaponOnly = bool("Weapon Only", true);
     private final BooleanSetting perfectAttack = bool("Perfect Attack", false);
-    private final BooleanSetting holdLeftClick = bool("Hold Left Click", true)
+    private final BooleanSetting holdClick = bool("Hold Click", true)
             .visibleWhen(() -> !perfectAttack.getValue());
     private final NumberSetting minCps = number("Min CPS", 8.0D, 1.0D, 20.0D, 1.0D)
             .visibleWhen(() -> !perfectAttack.getValue());
@@ -44,8 +41,11 @@ public final class Trigger extends Module {
     }
 
     @Override
-    public void onTick(TickEvent event) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    public void onInput(InputEvent event) {
+        handleInput(event.getClient());
+    }
+
+    public void handleInput(MinecraftClient client) {
         ClientPlayerEntity player = client.player;
         if (player == null || client.world == null || client.interactionManager == null) {
             return;
@@ -55,7 +55,7 @@ public final class Trigger extends Module {
             return;
         }
 
-        if (!perfectAttack.getValue() && holdLeftClick.getValue() && !client.options.attackKey.isPressed()) {
+        if (!perfectAttack.getValue() && holdClick.getValue() && !client.options.attackKey.isPressed()) {
             return;
         }
 
@@ -64,7 +64,7 @@ public final class Trigger extends Module {
             return;
         }
 
-        if (weaponOnly.getValue() && !isHoldingWeapon(player.getMainHandStack())) {
+        if (weaponOnly.getValue() && !InventoryUtils.isWeapon(player.getMainHandStack())) {
             return;
         }
 
@@ -110,10 +110,5 @@ public final class Trigger extends Module {
         int cps = ThreadLocalRandom.current().nextInt(min, max + 1);
         return Math.max(1L, Math.round(1000.0D / cps));
     }
-
-    private boolean isHoldingWeapon(ItemStack stack) {
-        return stack.getItem() instanceof SwordItem
-                || stack.getItem() instanceof AxeItem
-                || stack.getItem() instanceof MaceItem;
-    }
 }
+

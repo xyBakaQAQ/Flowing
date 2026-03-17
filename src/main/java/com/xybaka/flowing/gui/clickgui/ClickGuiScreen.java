@@ -9,13 +9,17 @@ import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
 import com.xybaka.flowing.util.ColorUtil;
+import com.xybaka.flowing.util.MoveUtil;
 import com.xybaka.flowing.util.WindowUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Map;
 
 public final class ClickGuiScreen extends Screen {
     private static final int PANEL_WIDTH = 410;
@@ -61,6 +65,7 @@ public final class ClickGuiScreen extends Screen {
     );
 
     private final ClickGuiManager manager = ClickGuiManager.getInstance();
+    private final Map<KeyBinding, Integer> movementKeys;
     private int panelX;
     private int panelY;
     private boolean dragging;
@@ -73,6 +78,7 @@ public final class ClickGuiScreen extends Screen {
         POSITION.setSize(PANEL_WIDTH, PANEL_HEIGHT);
         this.panelX = POSITION.getRenderX();
         this.panelY = POSITION.getRenderY();
+        this.movementKeys = MoveUtil.createMovementKeyMap(MinecraftClient.getInstance());
     }
 
     @Override
@@ -84,12 +90,32 @@ public final class ClickGuiScreen extends Screen {
     }
 
     @Override
+    public void tick() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        MoveUtil.updateMovementKeys(client, movementKeys, false);
+    }
+
+    @Override
     protected void applyBlur() {
     }
 
     @Override
     public boolean shouldPause() {
         return false;
+    }
+
+    @Override
+    public void close() {
+        dragging = false;
+        manager.stopSliding();
+        manager.closeModeList();
+        MoveUtil.restoreMovementKeys(MinecraftClient.getInstance(), movementKeys);
+        MinecraftClient.getInstance().setScreen(null);
+    }
+
+    @Override
+    public void removed() {
+        MoveUtil.restoreMovementKeys(MinecraftClient.getInstance(), movementKeys);
     }
 
     @Override
@@ -315,14 +341,6 @@ public final class ClickGuiScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    @Override
-    public void close() {
-        dragging = false;
-        manager.stopSliding();
-        manager.closeModeList();
-        MinecraftClient.getInstance().setScreen(null);
-    }
-
     private int renderSettingBlock(DrawContext context, Setting setting, int contentX, int panelRight, int y) {
         int indent = SETTING_INDENT + setting.getIndentLevel() * SETTING_LEVEL_WIDTH;
         int blockHeight = getSettingBlockHeight(setting);
@@ -546,3 +564,4 @@ public final class ClickGuiScreen extends Screen {
         return Math.max(0, Math.min(y, height - PANEL_HEIGHT));
     }
 }
+

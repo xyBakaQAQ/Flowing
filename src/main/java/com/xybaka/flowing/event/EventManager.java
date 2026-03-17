@@ -1,5 +1,6 @@
 package com.xybaka.flowing.event;
 
+import com.xybaka.flowing.event.features.InputEvent;
 import com.xybaka.flowing.event.features.KeyboardEvent;
 import com.xybaka.flowing.event.features.TickEvent;
 import com.xybaka.flowing.event.features.WorldRenderEvent;
@@ -7,6 +8,7 @@ import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.ModuleManager;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.MinecraftClient;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
 
@@ -22,6 +24,10 @@ public final class EventManager {
 
     public static void onTick() {
         post(TICK_EVENT);
+    }
+
+    public static void onInput(MinecraftClient client) {
+        post(new InputEvent(client));
     }
 
     public static void onKey(int key, int action) {

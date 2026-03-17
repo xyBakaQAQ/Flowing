@@ -10,6 +10,7 @@ import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
+import net.minecraft.client.MinecraftClient;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ import java.util.Objects;
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
 public abstract class Module implements EventListener {
+    protected final MinecraftClient mc = MinecraftClient.getInstance();
+
     private final String name;
     private final Category category;
     private int key;

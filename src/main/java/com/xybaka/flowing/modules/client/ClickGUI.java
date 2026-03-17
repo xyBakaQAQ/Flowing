@@ -28,3 +28,4 @@ public final class ClickGUI extends Module {
         return false;
     }
 }
+

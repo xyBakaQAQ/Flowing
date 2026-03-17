@@ -3,7 +3,7 @@ package com.xybaka.flowing.modules.movement;
 import com.xybaka.flowing.event.features.TickEvent;
 import com.xybaka.flowing.modules.Category;
 import com.xybaka.flowing.modules.Module;
-import net.minecraft.client.MinecraftClient;
+import com.xybaka.flowing.util.MoveUtil;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.lwjgl.glfw.GLFW;
 
@@ -14,14 +14,12 @@ public final class Sprint extends Module {
 
     @Override
     public void onTick(TickEvent event) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientPlayerEntity player = client.player;
+        ClientPlayerEntity player = mc.player;
         if (player == null) {
             return;
         }
 
-        boolean movingForward = player.input.movementForward > 0.0F;
-        if (player.isSneaking() || player.horizontalCollision || !movingForward) {
+        if (player.isSneaking() || player.horizontalCollision || !MoveUtil.isMovingForward(mc)) {
             return;
         }
 

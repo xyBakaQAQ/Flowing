@@ -2,10 +2,14 @@ package com.xybaka.flowing.modules;
 
 import com.xybaka.flowing.modules.client.ClickGUI;
 import com.xybaka.flowing.modules.client.Target;
+import com.xybaka.flowing.modules.combat.AimAssist;
 import com.xybaka.flowing.modules.client.Teams;
 import com.xybaka.flowing.modules.combat.Trigger;
+import com.xybaka.flowing.modules.movement.InvMove;
 import com.xybaka.flowing.modules.movement.Sprint;
 import com.xybaka.flowing.modules.player.AutoTool;
+import com.xybaka.flowing.modules.player.AutoPlace;
+import com.xybaka.flowing.modules.player.Eagle;
 import com.xybaka.flowing.modules.player.GhostHand;
 import com.xybaka.flowing.modules.player.InventoryHelper;
 import com.xybaka.flowing.modules.render.Camera;
@@ -58,12 +62,16 @@ public final class ModuleManager {
     private void initializeModules() {
         // Combat
         registerModule(new Trigger());
+        registerModule(new AimAssist());
 
         // Movement
         registerModule(new Sprint());
+        registerModule(new InvMove());
 
         // Plyaer
         registerModule(new AutoTool());
+        registerModule(new AutoPlace());
+        registerModule(new Eagle());
         registerModule(new InventoryHelper());
         registerModule(new GhostHand());
 
@@ -133,3 +141,5 @@ public final class ModuleManager {
         return name.toLowerCase(Locale.ROOT);
     }
 }
+
+

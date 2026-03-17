@@ -9,6 +9,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
+    @Inject(method = "handleInputEvents", at = @At("TAIL"))
+    private void flowing$postInputEvent(CallbackInfo ci) {
+        EventManager.onInput((MinecraftClient) (Object) this);
+    }
+
     @Inject(method = "tick", at = @At("TAIL"))
     private void flowing$postTickEvent(CallbackInfo ci) {
         EventManager.onTick();

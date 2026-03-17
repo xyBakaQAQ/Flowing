@@ -36,7 +36,7 @@ public final class AutoTool extends Module {
     public void onTick(TickEvent event) {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
-        if (player == null || client.world == null || client.currentScreen != null) {
+        if (player == null || mc.world == null || mc.currentScreen != null) {
             resetState();
             return;
         }
@@ -46,12 +46,12 @@ public final class AutoTool extends Module {
             return;
         }
 
-        if (!client.options.attackKey.isPressed()) {
+        if (!mc.options.attackKey.isPressed()) {
             handleRelease(player);
             return;
         }
 
-        HitResult hitResult = client.crosshairTarget;
+        HitResult hitResult = mc.crosshairTarget;
         if (!(hitResult instanceof BlockHitResult blockHitResult) || hitResult.getType() != HitResult.Type.BLOCK) {
             handleRelease(player);
             return;
@@ -62,7 +62,7 @@ public final class AutoTool extends Module {
             previousSlot = player.getInventory().selectedSlot;
         }
 
-        int bestSlot = InventoryUtils.getBestToolSlot(player, client.world.getBlockState(blockHitResult.getBlockPos()), sword.getValue());
+        int bestSlot = InventoryUtils.getBestToolSlot(player, mc.world.getBlockState(blockHitResult.getBlockPos()), sword.getValue());
         if (bestSlot != player.getInventory().selectedSlot) {
             player.getInventory().selectedSlot = bestSlot;
         }
@@ -100,3 +100,4 @@ public final class AutoTool extends Module {
         switchBackAt = -1L;
     }
 }
+

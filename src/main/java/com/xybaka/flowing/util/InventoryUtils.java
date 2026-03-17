@@ -22,6 +22,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.LingeringPotionItem;
+import net.minecraft.item.MaceItem;
 import net.minecraft.item.PotionItem;
 import net.minecraft.item.ShieldItem;
 import net.minecraft.item.SnowballItem;
@@ -78,7 +79,7 @@ public final class InventoryUtils {
     public static String getItemCategory(ItemStack stack) {
         Item item = stack.getItem();
 
-        if (stack.get(DataComponentTypes.EQUIPPABLE) != null) {
+        if (isArmor(stack)) {
             return "armor_" + stack.get(DataComponentTypes.EQUIPPABLE).slot().getName();
         }
 
@@ -151,11 +152,35 @@ public final class InventoryUtils {
         return "other";
     }
 
+    public static boolean isWeapon(ItemStack stack) {
+        return stack.isIn(ItemTags.SWORDS)
+                || stack.isIn(ItemTags.AXES)
+                || stack.getItem() instanceof MaceItem;
+    }
+
+    public static boolean isBlock(ItemStack stack) {
+        return "block".equals(getHelperItemCategory(stack));
+    }
+
     public static boolean isMiningToolCategory(String category) {
         return "tool_pickaxe".equals(category)
                 || "tool_shovel".equals(category)
                 || "tool_axe".equals(category)
                 || "tool_hoe".equals(category);
+    }
+
+    public static boolean isArmor(ItemStack stack) {
+        if (!stack.contains(DataComponentTypes.EQUIPPABLE)) {
+            return false;
+        }
+
+        EquipmentSlot slot = stack.get(DataComponentTypes.EQUIPPABLE).slot();
+        if (!isArmorSlot(slot)) {
+            return false;
+        }
+
+        return getAttributeValue(stack, EntityAttributes.ARMOR) > 0.0D
+                || getAttributeValue(stack, EntityAttributes.ARMOR_TOUGHNESS) > 0.0D;
     }
 
     public static boolean isArmorSlot(EquipmentSlot slot) {
@@ -301,7 +326,7 @@ public final class InventoryUtils {
             return baseSpeed + (efficiency > 0 ? (efficiency * efficiency) + 1.0D : 0.0D);
         }
 
-        if (stack.contains(DataComponentTypes.EQUIPPABLE)) {
+        if (isArmor(stack)) {
             return calculateArmorScore(player, stack);
         }
 
@@ -314,7 +339,7 @@ public final class InventoryUtils {
     }
 
     public static double calculateArmorScore(PlayerEntity player, ItemStack stack) {
-        if (!stack.contains(DataComponentTypes.EQUIPPABLE)) {
+        if (!isArmor(stack)) {
             return 0.0D;
         }
 
@@ -397,3 +422,4 @@ public final class InventoryUtils {
         return Math.min(0.80D, Math.max(0.0D, effectiveArmor / 25.0D));
     }
 }
+

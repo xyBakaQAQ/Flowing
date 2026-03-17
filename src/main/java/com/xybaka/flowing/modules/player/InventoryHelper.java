@@ -2,10 +2,12 @@ package com.xybaka.flowing.modules.player;
 
 import com.xybaka.flowing.event.features.TickEvent;
 import com.xybaka.flowing.modules.Category;
+import com.xybaka.flowing.modules.movement.InvMove;
 import com.xybaka.flowing.modules.Module;
 import com.xybaka.flowing.modules.settings.BooleanSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
+import com.xybaka.flowing.util.ColorUtil;
 import com.xybaka.flowing.util.InventoryUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
@@ -33,8 +35,8 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class InventoryHelper extends Module {
-    private static final int USEFUL_COLOR = 0x5000FF00;
-    private static final int GARBAGE_COLOR = 0x50FF0000;
+    private static final int USEFUL_COLOR = ColorUtil.withAlpha(ColorUtil.green, 0x50);
+    private static final int GARBAGE_COLOR = ColorUtil.withAlpha(ColorUtil.red, 0x50);
     private static final double SCORE_EPSILON = 0.0001D;
 
     private final ModeSetting mode = mode("Mode", "Visual", "Visual", "Manual", "Auto");
@@ -45,6 +47,8 @@ public final class InventoryHelper extends Module {
     private final NumberSetting maxDelay = number("Max Delay", 250.0D, 0.0D, 1000.0D, 10.0D)
             .visibleWhen(() -> !mode.is("Visual"));
     private final BooleanSetting autoClose = bool("Auto Close", true)
+            .visibleWhen(() -> !mode.is("Visual"));
+    private final BooleanSetting pauseWhileMoving = bool("Pause Moving", true)
             .visibleWhen(() -> !mode.is("Visual"));
     private final BooleanSetting checkTools = bool("Check Tools", true);
 
@@ -93,8 +97,12 @@ public final class InventoryHelper extends Module {
             return;
         }
 
-        if (!(client.currentScreen instanceof HandledScreen<?> screen)) {
+        if (!(mc.currentScreen instanceof HandledScreen<?> screen)) {
             clearState();
+            return;
+        }
+
+        if (pauseWhileMoving.getValue() && InvMove.shouldPauseInventoryActions()) {
             return;
         }
 
@@ -102,7 +110,7 @@ public final class InventoryHelper extends Module {
             usefulSlots.clear();
             garbageSlots.clear();
         } else {
-            updateHelpers(client.player, screen.getScreenHandler().slots);
+            updateHelpers(mc.player, screen.getScreenHandler().slots);
         }
 
         if (mode.is("Visual")) {
@@ -120,13 +128,13 @@ public final class InventoryHelper extends Module {
 
         if (pendingActions.isEmpty()) {
             if (stealer.getValue() && isChestScreen(screen)) {
-                queueStealerActions(client, screen);
+                queueStealerActions(mc, screen);
             } else if (screen instanceof InventoryScreen inventoryScreen) {
-                queueInventoryActions(client, inventoryScreen);
+                queueInventoryActions(mc, inventoryScreen);
             }
         }
 
-        processPendingActions(client, screen);
+        processPendingActions(mc, screen);
     }
 
     public int getSlotHighlightColor(Slot slot) {
@@ -348,11 +356,6 @@ public final class InventoryHelper extends Module {
             }
 
             ItemStack currentHotbarStack = player.getInventory().getStack(hotbar);
-            if (!currentHotbarStack.isEmpty() && targetCategory.equals(getItemCategory(currentHotbarStack))) {
-                assigned.add(hotbar);
-                continue;
-            }
-
             int bestIndex = -1;
             double bestScore = -1.0D;
             for (int index = 0; index < 36; index++) {
@@ -372,7 +375,18 @@ public final class InventoryHelper extends Module {
                 }
             }
 
+            if (!currentHotbarStack.isEmpty() && targetCategory.equals(getItemCategory(currentHotbarStack))) {
+                double currentScore = calculateScore(player, currentHotbarStack);
+                if (bestIndex == -1 || currentScore >= bestScore - SCORE_EPSILON) {
+                    assigned.add(hotbar);
+                    continue;
+                }
+            }
+
             if (bestIndex == -1 || bestIndex == hotbar) {
+                if (bestIndex == hotbar) {
+                    assigned.add(hotbar);
+                }
                 continue;
             }
 
@@ -566,3 +580,14 @@ public final class InventoryHelper extends Module {
         CLOSE_SCREEN
     }
 }
+
+
+
+
+
+
+
+
+
+
+

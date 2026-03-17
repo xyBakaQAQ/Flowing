@@ -90,7 +90,7 @@ public final class HUD extends Module {
 
     private void renderArrayList(DrawContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        TextRenderer textRenderer = mc.textRenderer;
         List<Module> enabledModules = ModuleManager.getEnabledModules().stream()
                 .sorted(Comparator.comparingInt((Module module) -> textRenderer.getWidth(module.getName())).reversed())
                 .toList();
@@ -113,8 +113,8 @@ public final class HUD extends Module {
             return;
         }
 
-        TextRenderer textRenderer = client.textRenderer;
-        Collection<StatusEffectInstance> effects = client.player.getStatusEffects();
+        TextRenderer textRenderer = mc.textRenderer;
+        Collection<StatusEffectInstance> effects = mc.player.getStatusEffects();
         int y = context.getScaledWindowHeight() - textRenderer.fontHeight - PADDING;
 
         for (StatusEffectInstance effect : effects) {
@@ -135,21 +135,21 @@ public final class HUD extends Module {
             return;
         }
 
-        TextRenderer textRenderer = client.textRenderer;
+        TextRenderer textRenderer = mc.textRenderer;
         int y = context.getScaledWindowHeight() - textRenderer.fontHeight - PADDING;
 
-        String xyz = String.format("XYZ: %.1f, %.1f, %.1f", client.player.getX(), client.player.getY(), client.player.getZ());
+        String xyz = String.format("XYZ: %.1f, %.1f, %.1f", mc.player.getX(), mc.player.getY(), mc.player.getZ());
         context.drawText(textRenderer, xyz, PADDING, y, TEXT_COLOR, true);
         y -= textRenderer.fontHeight + PADDING;
 
-        double deltaX = client.player.getX() - client.player.prevX;
-        double deltaZ = client.player.getZ() - client.player.prevZ;
+        double deltaX = mc.player.getX() - mc.player.prevX;
+        double deltaZ = mc.player.getZ() - mc.player.prevZ;
         double speed = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ) * 20.0D;
         String speedText = String.format("Speed: %.2f m/s", speed);
         context.drawText(textRenderer, speedText, PADDING, y, TEXT_COLOR, true);
         y -= textRenderer.fontHeight + PADDING;
 
-        String fpsText = "FPS: " + client.getCurrentFps();
+        String fpsText = "FPS: " + mc.getCurrentFps();
         context.drawText(textRenderer, fpsText, PADDING, y, TEXT_COLOR, true);
     }
 
@@ -158,3 +158,4 @@ public final class HUD extends Module {
         return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
     }
 }
+

@@ -115,7 +115,7 @@ public final class NameTags extends Module {
     private void renderProjectedTag(DrawContext context, ProjectedTag tag) {
         MinecraftClient client = MinecraftClient.getInstance();
         int statsWidth = client.textRenderer.getWidth(tag.statsLine());
-        int nameWidth = client.textRenderer.getWidth(tag.nameLine());
+        int nameWidth = mc.textRenderer.getWidth(tag.nameLine());
         int maxWidth = Math.max(statsWidth, nameWidth);
         float scale = (float) tag.scale();
         float lineHeight = LINE_SPACING;
@@ -133,8 +133,8 @@ public final class NameTags extends Module {
 
         int statsX = Math.round(-statsWidth / 2.0F);
         int nameX = Math.round(-nameWidth / 2.0F);
-        context.drawTextWithShadow(client.textRenderer, tag.statsLine(), statsX, Math.round(-totalHeight), TEXT_COLOR);
-        context.drawTextWithShadow(client.textRenderer, tag.nameLine(), nameX, Math.round(-lineHeight), TEXT_COLOR);
+        context.drawTextWithShadow(mc.textRenderer, tag.statsLine(), statsX, Math.round(-totalHeight), TEXT_COLOR);
+        context.drawTextWithShadow(mc.textRenderer, tag.nameLine(), nameX, Math.round(-lineHeight), TEXT_COLOR);
         context.getMatrices().pop();
     }
 
@@ -190,7 +190,7 @@ public final class NameTags extends Module {
             return 0;
         }
 
-        PlayerListEntry entry = client.getNetworkHandler().getPlayerListEntry(player.getUuid());
+        PlayerListEntry entry = mc.getNetworkHandler().getPlayerListEntry(player.getUuid());
         return entry == null ? 0 : Math.max(0, entry.getLatency());
     }
 
@@ -217,3 +217,4 @@ public final class NameTags extends Module {
     private record ProjectedTag(double screenX, double screenY, Text statsLine, Text nameLine, double scale) {
     }
 }
+

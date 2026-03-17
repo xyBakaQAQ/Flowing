@@ -1,5 +1,9 @@
 package com.xybaka.flowing.util;
 
+import com.xybaka.flowing.mixin.Accessor.KeyBindingAccessor;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
@@ -66,7 +70,25 @@ public final class KeyUtil {
             case GLFW.GLFW_KEY_PAGE_UP -> "PGUP";
             case GLFW.GLFW_KEY_PAGE_DOWN -> "PGDN";
             case GLFW.GLFW_KEY_CAPS_LOCK -> "CAPS";
-            default -> "K" + key;
+            default -> KEY_NAMES.getOrDefault(key, "GLFW_KEY_UNKNOWN").replace("GLFW_KEY_", "");
+        };
+    }
+
+    public static boolean isPhysicalKeyPressed(MinecraftClient client, KeyBinding keyBinding) {
+        if (client == null || client.getWindow() == null) {
+            return false;
+        }
+
+        InputUtil.Key boundKey = ((KeyBindingAccessor) keyBinding).flowing$getBoundKey();
+        if (boundKey == null) {
+            return false;
+        }
+
+        long handle = client.getWindow().getHandle();
+        return switch (boundKey.getCategory()) {
+            case KEYSYM -> InputUtil.isKeyPressed(handle, boundKey.getCode());
+            case MOUSE -> GLFW.glfwGetMouseButton(handle, boundKey.getCode()) == GLFW.GLFW_PRESS;
+            default -> false;
         };
     }
 }

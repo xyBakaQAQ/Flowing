@@ -166,7 +166,7 @@ public final class TargetUtil {
                 && isAllowedByInvisibleSetting(Profile.VISION, module, target);
     }
 
-    private static LivingEntity getBestTarget(Profile profile, double range) {
+    public static LivingEntity getBestTarget(Profile profile, double range) {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         if (player == null || client.world == null) {
@@ -266,3 +266,4 @@ public final class TargetUtil {
         return profile == Profile.ATTACK ? module.attackDead() : module.visionDead();
     }
 }
+
