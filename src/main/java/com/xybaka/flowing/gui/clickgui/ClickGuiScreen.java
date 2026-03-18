@@ -8,6 +8,7 @@ import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
+import com.xybaka.flowing.modules.settings.StringSetting;
 import com.xybaka.flowing.util.ColorUtil;
 import com.xybaka.flowing.util.MoveUtil;
 import com.xybaka.flowing.util.WindowUtil;
@@ -109,6 +110,7 @@ public final class ClickGuiScreen extends Screen {
         dragging = false;
         manager.stopSliding();
         manager.closeModeList();
+        manager.stopEditingString();
         MoveUtil.restoreMovementKeys(MinecraftClient.getInstance(), movementKeys);
         MinecraftClient.getInstance().setScreen(null);
     }
@@ -221,6 +223,7 @@ public final class ClickGuiScreen extends Screen {
         if (!isHoveringContent(mouseX, mouseY)) {
             manager.stopSliding();
             manager.closeModeList();
+            manager.stopEditingString();
             return super.mouseClicked(mouseX, mouseY, button);
         }
 
@@ -236,6 +239,7 @@ public final class ClickGuiScreen extends Screen {
                         manager.clearBindingTarget();
                         manager.stopSliding();
                         manager.closeModeList();
+                        manager.stopEditingString();
                         manager.toggle(module);
                     }
                     return true;
@@ -245,6 +249,7 @@ public final class ClickGuiScreen extends Screen {
                     manager.clearBindingTarget();
                     manager.stopSliding();
                     manager.closeModeList();
+                    manager.stopEditingString();
                     manager.toggleExpanded(module);
                     clampContentScroll();
                     return true;
@@ -265,6 +270,7 @@ public final class ClickGuiScreen extends Screen {
 
         manager.stopSliding();
         manager.closeModeList();
+        manager.stopEditingString();
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -333,12 +339,47 @@ public final class ClickGuiScreen extends Screen {
             return true;
         }
 
+        StringSetting editingStringSetting = manager.getEditingStringSetting();
+        if (editingStringSetting != null) {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+                manager.stopEditingString();
+                return true;
+            }
+
+            if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+                String value = editingStringSetting.getValue();
+                if (!value.isEmpty()) {
+                    editingStringSetting.setValue(value.substring(0, value.length() - 1));
+                }
+                return true;
+            }
+
+            if (Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_V) {
+                String clipboard = MinecraftClient.getInstance().keyboard.getClipboard();
+                appendStringValue(editingStringSetting, clipboard);
+                return true;
+            }
+        }
+
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             close();
             return true;
         }
 
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        StringSetting editingStringSetting = manager.getEditingStringSetting();
+        if (editingStringSetting == null) {
+            return super.charTyped(chr, modifiers);
+        }
+
+        if (!Character.isISOControl(chr)) {
+            appendStringValue(editingStringSetting, Character.toString(chr));
+        }
+        return true;
     }
 
     private int renderSettingBlock(DrawContext context, Setting setting, int contentX, int panelRight, int y) {
@@ -408,6 +449,12 @@ public final class ClickGuiScreen extends Screen {
             int stateColor = booleanSetting.getValue() ? BOOLEAN_ON_COLOR : BOOLEAN_OFF_COLOR;
             context.drawText(textRenderer, Text.literal(base), x, y, TEXT_COLOR, false);
             context.drawText(textRenderer, Text.literal(state), x + textRenderer.getWidth(base), y, stateColor, false);
+            return;
+        }
+
+        if (setting instanceof StringSetting stringSetting) {
+            String suffix = manager.isEditingString(setting) ? "_" : "";
+            context.drawText(textRenderer, Text.literal(prefix + setting.getName() + ": " + stringSetting.getValue() + suffix), x, y, TEXT_COLOR, false);
             return;
         }
 
@@ -563,5 +610,19 @@ public final class ClickGuiScreen extends Screen {
     private int clampPanelY(int y) {
         return Math.max(0, Math.min(y, height - PANEL_HEIGHT));
     }
-}
 
+    private void appendStringValue(StringSetting setting, String appended) {
+        if (appended == null || appended.isEmpty()) {
+            return;
+        }
+
+        StringBuilder builder = new StringBuilder(setting.getValue());
+        for (int index = 0; index < appended.length() && builder.length() < setting.getMaxLength(); index++) {
+            char chr = appended.charAt(index);
+            if (!Character.isISOControl(chr)) {
+                builder.append(chr);
+            }
+        }
+        setting.setValue(builder.toString());
+    }
+}

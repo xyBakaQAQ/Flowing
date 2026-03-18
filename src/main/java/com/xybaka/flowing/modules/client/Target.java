@@ -61,6 +61,10 @@ public final class Target extends Module {
         enable();
     }
 
+    @Override
+    protected boolean shouldNotifyStateChange() {
+        return false;
+    }
     public boolean attackTarget() {
         return attackTarget.getValue();
     }

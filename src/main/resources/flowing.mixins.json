@@ -1,32 +1,33 @@
 {
-	"required": true,
-	"package": "com.xybaka.flowing.mixin",
-	"compatibilityLevel": "JAVA_21",
-	"mixins": [
-		"BlockViewMixin",
-		"CameraMixin",
-		"ChatScreenMixin",
-		"ClientCommonNetworkHandlerMixin",
-		"EntityMixin",
-		"EntityRendererMixin",
-		"GameRendererMixin",
-		"HandledScreenMixin",
-		"Accessor.InGameHudAccessor",
-		"Accessor.KeyBindingAccessor",
-		"Accessor.MinecraftClientAccessor",
-		"InGameHudMixin",
-		"InGameOverlayRendererMixin",
-		"KeyboardMixin",
-		"LightmapTextureManagerMixin",
-		"MinecraftClientMixin",
-		"MouseMixin",
-		"PlayerListEntryMixin",
-		"WorldRendererMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
-	}
+    "required":  true,
+    "package":  "com.xybaka.flowing.mixin",
+    "compatibilityLevel":  "JAVA_21",
+    "mixins":  [
+                   "BlockViewMixin",
+                   "CameraMixin",
+                   "ChatScreenMixin",
+                   "ClientCommonNetworkHandlerMixin",
+                   "EntityMixin",
+                   "EntityRendererMixin",
+                   "GameRendererMixin",
+                   "HandledScreenMixin",
+                   "Accessor.InGameHudAccessor",
+                   "Accessor.KeyBindingAccessor",
+                   "Accessor.MinecraftClientAccessor",
+                   "InGameHudMixin",
+                   "InGameOverlayRendererMixin",
+                   "KeyboardMixin",
+                   "LightmapTextureManagerMixin",
+                   "MinecraftClientMixin",
+                   "MouseMixin",
+                   "PlayerEntityRendererMixin",
+                   "PlayerListEntryMixin",
+                   "WorldRendererMixin"
+               ],
+    "injectors":  {
+                      "defaultRequire":  1
+                  },
+    "overwrites":  {
+                       "requireAnnotations":  true
+                   }
 }

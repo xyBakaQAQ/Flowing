@@ -10,6 +10,7 @@ import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
+import com.xybaka.flowing.modules.settings.StringSetting;
 import net.minecraft.client.MinecraftClient;
 
 import java.lang.reflect.Field;
@@ -136,6 +137,10 @@ public abstract class Module implements EventListener {
 
     protected final ColorSetting color(String name, int red, int green, int blue, int alpha) {
         return new ColorSetting(name, red, green, blue, alpha, this);
+    }
+
+    protected final StringSetting string(String name, String defaultValue, int maxLength) {
+        return new StringSetting(name, defaultValue, maxLength, this);
     }
 
     @Override

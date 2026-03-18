@@ -1,10 +1,13 @@
 package com.xybaka.flowing.mixin;
 
+import com.xybaka.flowing.gui.arraylist.ArrayListRenderer;
+import com.xybaka.flowing.gui.keybinds.KeyBindsRenderer;
 import com.xybaka.flowing.gui.keystrokes.KeystrokesRenderer;
 import com.xybaka.flowing.gui.notification.NotificationRenderer;
 import com.xybaka.flowing.gui.scoreboard.ScoreboardRenderer;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.render.HUD;
+import com.xybaka.flowing.modules.render.KeyBinds;
 import com.xybaka.flowing.modules.render.Keystrokes;
 import com.xybaka.flowing.modules.render.NameTags;
 import com.xybaka.flowing.modules.render.Scoreboard;
@@ -41,15 +44,24 @@ public class InGameHudMixin {
 
         HUD hud = ModuleManager.getModule(HUD.class);
         if (hud != null && hud.isEnabled()) {
-            if (chatOpen) {
-                hud.renderArrayListOverlay(context);
-            } else {
+            if (!chatOpen) {
                 hud.render(context);
+            } else if (hud.shouldRenderTargetHud()) {
+                hud.renderTargetHud(context);
+            }
+
+            if (!chatOpen && hud.shouldRenderArrayList()) {
+                ArrayListRenderer.render(context);
             }
 
             if (!chatOpen && hud.shouldRenderNotifications()) {
                 NotificationRenderer.render(context);
             }
+        }
+
+        KeyBinds keyBinds = ModuleManager.getModule(KeyBinds.class);
+        if (!chatOpen && keyBinds != null && keyBinds.isEnabled()) {
+            KeyBindsRenderer.render(context, keyBinds);
         }
 
         Keystrokes keystrokes = ModuleManager.getModule(Keystrokes.class);

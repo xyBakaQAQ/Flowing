@@ -1,13 +1,16 @@
 package com.xybaka.flowing.mixin;
 
+import com.xybaka.flowing.gui.arraylist.ArrayListRenderer;
 import com.xybaka.flowing.gui.component.HudSnapHelper;
 import com.xybaka.flowing.gui.inventory.InventoryRenderer;
+import com.xybaka.flowing.gui.keybinds.KeyBindsRenderer;
 import com.xybaka.flowing.gui.keystrokes.CpsCounter;
 import com.xybaka.flowing.gui.keystrokes.KeystrokesRenderer;
 import com.xybaka.flowing.gui.scoreboard.ScoreboardRenderer;
 import com.xybaka.flowing.gui.targethud.TargetHudRenderer;
 import com.xybaka.flowing.modules.ModuleManager;
 import com.xybaka.flowing.modules.render.HUD;
+import com.xybaka.flowing.modules.render.KeyBinds;
 import com.xybaka.flowing.modules.render.Keystrokes;
 import com.xybaka.flowing.modules.render.Scoreboard;
 import net.minecraft.client.MinecraftClient;
@@ -43,6 +46,18 @@ public abstract class MouseMixin {
         double scaledY = y * clientWindow.getScaledHeight() / clientWindow.getHeight();
         boolean snap = isShiftDown(clientWindow);
 
+        HUD hud = ModuleManager.getModule(HUD.class);
+        if (hud != null && hud.isEnabled() && hud.shouldRenderArrayList() && ArrayListRenderer.isDragging() && ArrayListRenderer.drag(scaledX, scaledY, snap)) {
+            ci.cancel();
+            return;
+        }
+
+        KeyBinds keyBinds = ModuleManager.getModule(KeyBinds.class);
+        if (keyBinds != null && keyBinds.isEnabled() && KeyBindsRenderer.isDragging() && KeyBindsRenderer.drag(keyBinds, scaledX, scaledY, snap)) {
+            ci.cancel();
+            return;
+        }
+
         Keystrokes keystrokes = ModuleManager.getModule(Keystrokes.class);
         if (keystrokes != null && keystrokes.isEnabled() && KeystrokesRenderer.isDragging() && KeystrokesRenderer.drag(keystrokes, scaledX, scaledY, snap)) {
             ci.cancel();
@@ -55,7 +70,6 @@ public abstract class MouseMixin {
             return;
         }
 
-        HUD hud = ModuleManager.getModule(HUD.class);
         if (hud == null || !hud.isEnabled()) {
             HudSnapHelper.clearGuides();
             return;
@@ -87,6 +101,8 @@ public abstract class MouseMixin {
         if (client.currentScreen instanceof ChatScreen
                 && button == GLFW.GLFW_MOUSE_BUTTON_LEFT
                 && action == GLFW.GLFW_RELEASE) {
+            ArrayListRenderer.stopDragging();
+            KeyBindsRenderer.stopDragging();
             KeystrokesRenderer.stopDragging();
             ScoreboardRenderer.stopDragging();
             TargetHudRenderer.stopDragging();

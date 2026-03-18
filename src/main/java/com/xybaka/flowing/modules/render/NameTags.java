@@ -217,4 +217,3 @@ public final class NameTags extends Module {
     private record ProjectedTag(double screenX, double screenY, Text statsLine, Text nameLine, double scale) {
     }
 }
-

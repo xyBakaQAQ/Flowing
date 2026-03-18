@@ -14,6 +14,7 @@ import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
+import com.xybaka.flowing.modules.settings.StringSetting;
 import com.xybaka.flowing.util.KeyUtil;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -122,6 +123,8 @@ public final class ConfigManager {
                 settingsObject.addProperty(setting.getName(), numberSetting.getValue());
             } else if (setting instanceof ColorSetting colorSetting) {
                 settingsObject.addProperty(setting.getName(), colorSetting.getColor());
+            } else if (setting instanceof StringSetting stringSetting) {
+                settingsObject.addProperty(setting.getName(), stringSetting.getValue());
             }
         }
 
@@ -172,6 +175,11 @@ public final class ConfigManager {
 
         if (setting instanceof ColorSetting colorSetting) {
             colorSetting.setAlpha(value.getAsInt() >> 24 & 0xFF);
+            return;
+        }
+
+        if (setting instanceof StringSetting stringSetting) {
+            stringSetting.setValue(value.getAsString());
         }
     }
 }

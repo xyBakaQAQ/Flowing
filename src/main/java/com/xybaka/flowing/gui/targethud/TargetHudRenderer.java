@@ -103,5 +103,3 @@ public final class TargetHudRenderer {
         COMPONENT.setSize(width, height);
     }
 }
-
-

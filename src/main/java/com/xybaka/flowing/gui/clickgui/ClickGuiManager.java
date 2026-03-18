@@ -8,6 +8,7 @@ import com.xybaka.flowing.modules.settings.ColorSetting;
 import com.xybaka.flowing.modules.settings.ModeSetting;
 import com.xybaka.flowing.modules.settings.NumberSetting;
 import com.xybaka.flowing.modules.settings.Setting;
+import com.xybaka.flowing.modules.settings.StringSetting;
 import com.xybaka.flowing.util.KeyUtil;
 
 import java.util.Arrays;
@@ -31,6 +32,7 @@ public final class ClickGuiManager {
     private NumberSetting slidingNumberSetting;
     private ColorSetting slidingColorSetting;
     private ModeSetting openModeSetting;
+    private StringSetting editingStringSetting;
 
     private ClickGuiManager() {
     }
@@ -65,6 +67,10 @@ public final class ClickGuiManager {
 
         if (!isSettingVisible(slidingColorSetting)) {
             slidingColorSetting = null;
+        }
+
+        if (!isSettingVisible(editingStringSetting)) {
+            editingStringSetting = null;
         }
     }
 
@@ -136,6 +142,7 @@ public final class ClickGuiManager {
         slidingNumberSetting = null;
         slidingColorSetting = null;
         openModeSetting = null;
+        editingStringSetting = null;
     }
 
     public boolean isExpanded(Module module) {
@@ -165,6 +172,7 @@ public final class ClickGuiManager {
         slidingNumberSetting = null;
         slidingColorSetting = null;
         openModeSetting = null;
+        editingStringSetting = null;
     }
 
     public void clearBindingTarget() {
@@ -191,6 +199,7 @@ public final class ClickGuiManager {
             openModeSetting = openModeSetting == modeSetting ? null : modeSetting;
             slidingNumberSetting = null;
             slidingColorSetting = null;
+            editingStringSetting = null;
             syncVisibleState();
             return true;
         }
@@ -198,6 +207,7 @@ public final class ClickGuiManager {
         if (setting instanceof NumberSetting numberSetting) {
             slidingNumberSetting = numberSetting;
             slidingColorSetting = null;
+            editingStringSetting = null;
             syncVisibleState();
             return true;
         }
@@ -205,6 +215,16 @@ public final class ClickGuiManager {
         if (setting instanceof ColorSetting colorSetting) {
             slidingColorSetting = colorSetting;
             slidingNumberSetting = null;
+            editingStringSetting = null;
+            syncVisibleState();
+            return true;
+        }
+
+        if (setting instanceof StringSetting stringSetting) {
+            editingStringSetting = stringSetting;
+            slidingNumberSetting = null;
+            slidingColorSetting = null;
+            openModeSetting = null;
             syncVisibleState();
             return true;
         }
@@ -217,6 +237,7 @@ public final class ClickGuiManager {
             openModeSetting = openModeSetting == modeSetting ? null : modeSetting;
             slidingNumberSetting = null;
             slidingColorSetting = null;
+            editingStringSetting = null;
             syncVisibleState();
             return true;
         }
@@ -255,6 +276,18 @@ public final class ClickGuiManager {
         slidingColorSetting = null;
     }
 
+    public StringSetting getEditingStringSetting() {
+        return editingStringSetting;
+    }
+
+    public boolean isEditingString(Setting setting) {
+        return editingStringSetting == setting;
+    }
+
+    public void stopEditingString() {
+        editingStringSetting = null;
+    }
+
     public void updateSliding(NumberSetting setting, double percent) {
         double clamped = Math.max(0.0D, Math.min(1.0D, percent));
         double value = setting.getMin() + (setting.getMax() - setting.getMin()) * clamped;
@@ -283,6 +316,10 @@ public final class ClickGuiManager {
 
         if (setting instanceof ColorSetting colorSetting) {
             return displayName + ": " + colorSetting.getAlpha();
+        }
+
+        if (setting instanceof StringSetting stringSetting) {
+            return displayName + ": " + stringSetting.getValue();
         }
 
         return displayName;
